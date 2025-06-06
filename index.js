@@ -51,7 +51,7 @@ const email = emailField?.value || process.env.ZOHO_EMAIL;
  
   const prompt = `
   Create my customer a proffessional pdf file 
-  if the user purchased the 1 week plan then only make a 1 week long workout plan but please detail the workout day by day with direct instructions on what to do. And a 1 week long meal plan day by day breakfast lunch and dinner recipes, find new and interesting healthy meals that work for the clients diets and allergies. 
+  if the user purchased the 1 week plan then only make a 1 week long workout plan but please detail the workout day by day with direct instructions on what to do. And a 1 week long meal plan day by day breakfast lunch and dinner recipes,find new and interesting healthy meals that strictly avoid any of the user’s allergies, without mentioning or referencing them in the meal descriptions.
   if the user purchased the 1 month plan then make a 1 month long workout plan and detail each week with each days workout and meal plan structured in week blocks.
   the user has purchased the **${planType}** plan.
   You are a professional fitness and nutrition coach. Based on the following user profile, generate a highly detailed and structured personalized workout and meal plan:
