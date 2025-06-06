@@ -130,9 +130,9 @@ Make the response professional, supportive, and customized to the user.`;
         res.status(500).send('Email failed');
       }
     });
-    doc.registerFont('OpenSans', 'fonts/OpenSans-Regular.ttf');
-    doc.font('OpenSans'); 
-    doc.fontSize(12).text(planText);
+    doc.registerFont('Lora-SemiBold', 'fonts/Lora-SemiBold.ttf');
+    doc.font('Lora-SemiBold'); 
+    doc.fontSize(14).text(planText);
     doc.end();
   } catch (err) {
     console.error('❌ OpenAI or PDF error:', err);
