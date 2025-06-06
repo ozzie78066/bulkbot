@@ -45,7 +45,7 @@ app.post('/api/tally-webhook', async (req, res) => {
   const prompt = `
   Create my customer a proffessional pdf file 
   if the user purchased the 1 week plan then only make a 1 week long workout plan but please detail the workout day by day with direct instructions on what to do. And a 1 week long meal plan day by day breakfast lunch and dinner recipes, find new and interesting healthy meals that work for the clients diets and allergies. 
-  if the user purchased the 1 month plan then make a 1 month long workout plan and detail each week with each days workout and meal plan structured in a chart format so its easy to read.
+  if the user purchased the 1 month plan then make a 1 month long workout plan and detail each week with each days workout and meal plan structured in week blocks.
   the user has purchased the **${planType}** plan.
   You are a professional fitness and nutrition coach. Based on the following user profile, generate a highly detailed and structured personalized workout and meal plan:
 
@@ -53,6 +53,15 @@ ${userInfo}
 
 the user has purchased the **${planType}** plan.
 ---
+For each day, present meals using **clear sectioned blocks** like:
+
+Day 1  
+Breakfast: ...  
+Lunch: ...  
+Dinner: ...  
+Snack: ...
+
+Do NOT use tables or charts. Format meals as clean text.
 
 **Requirements for the response:**
 - the format should be as follows:
