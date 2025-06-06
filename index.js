@@ -14,6 +14,15 @@ app.use(bodyParser.json());
 app.post('/api/tally-webhook', async (req, res) => {
   const raw = req.body;
   const data = raw.data || raw;
+  const processedSubmissions = new Set();
+  const submissionId = data.submissionId;
+
+  if (processedSubmissions.has(submissionId)) {
+    console.log(`⚠️ Duplicate submission ${submissionId} ignored`);
+    return res.status(200).send("Already processed");
+   }
+  processedSubmissions.add(submissionId);
+  setTimeout(() => processedSubmissions.delete(submissionId), 15 * 60 * 1000); // auto-clear after 15 minutes
 
   console.log("\uD83E\uDDE0 Incoming Tally data:", data);
 
@@ -62,7 +71,7 @@ IMPORTANT:
 The user has stated the following allergies and intolerances:  
 Allergens: ${allergyNote || 'None'}  
 These ingredients MUST NOT be included in any meals. Do NOT mention or reference them in any way — just silently exclude them.
-
+do not even use a recipe that calls for their allergen.
 ---
 
 If the user purchased the 1 week plan:
@@ -117,7 +126,7 @@ STRICT FORMAT RULES:
 - Avoid filler — each day should have full detail for both workout and meals
 - Maintain clean structure for readability in a PDF
 - Tone should be expert, motivating, and supportive
-- Avoid using phrases like “without [allergen]” or “quinoa-free” — do not even use a recipe that calls for their allergen.
+
 
 
 This plan will be sold to customers. Treat it as a premium fitness product.
