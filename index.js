@@ -56,13 +56,39 @@ ${userInfo}
 
 the user has purchased the **${planType}** plan.
 ---
-For each day, present meals using **clear sectioned blocks** like:
+please make the pdf layout to this exact template:
 
-Day 1  
-Breakfast: ...  
-Lunch: ...  
-Dinner: ...  
-Snack: ...
+
+			BulkBot
+	
+ [users name] personalized fitness and nutrition plan
+
+
+Workout plan
+
+Day 1:
+-
+-
+-
+-
+etc.
+
+Meal plan
+
+Day 1
+-breakfast
+-lunch
+-dinner
+-snack
+
+etc
+
+
+
+Remember to hydrate and stay rested for best results
+[include note to help with their goal]
+
+Thank you for chosing BulkBot
 
 Do NOT use tables or charts. Format meals as clean text.
 
@@ -117,7 +143,7 @@ Make the response professional, supportive, and customized to the user.`;
           from: `BulkBot <${process.env.ZOHO_EMAIL}>`,
           to: email,
           subject: 'Your Custom Workout & Meal Plan',
-          text: 'Attached is your personalized plan!',
+          text: 'Attached is your personalized plan! \n Thank you for chosing BulkBot',
           attachments: [
             {
               filename: 'Plan.pdf',
