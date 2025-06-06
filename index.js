@@ -131,8 +131,10 @@ Make the response professional, supportive, and customized to the user.`;
       }
     });
     doc.registerFont('Lora-SemiBold', 'fonts/Lora-SemiBold.ttf');
-    doc.font('Lora-SemiBold'); 
-    doc.fontSize(14).text(planText);
+    doc.registerFont('BebasNeue-Regular', 'fonts/BebasNeue-Regular.ttf');
+    doc.font('BebasNeue-Regular').fontSize(16).text('Workout Plan');
+    doc.moveDown();
+    doc.font('Lora-SemiBold').fontSize(14).text(planText);
     doc.end();
   } catch (err) {
     console.error('❌ OpenAI or PDF error:', err);
