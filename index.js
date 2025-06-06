@@ -48,7 +48,7 @@ const email = emailField?.value || process.env.ZOHO_EMAIL;
   f => f.label.toLowerCase().trim() === 'allergies'
   );
   const allergyNote = allergyField?.value || 'None';
- 
+
   const prompt = `
   Create my customer a professional PDF file.
 
@@ -66,13 +66,13 @@ These ingredients MUST NOT be included in any meals. Do NOT mention or reference
 ---
 
 If the user purchased the 1 week plan:
-• Make a **1-week workout plan**, detailing workouts **day by day**
-• Make a **1-week meal plan**, including breakfast, lunch, dinner, and snack for **each day**
+• Make a **1-week workout plan**, detailing workouts **day by day all 7 days monday to sunday**
+• Make a **1-week meal plan**, including breakfast, lunch, dinner, and snack for **each day monday to sunday**
 • Each recipe must be unique, healthy, and suitable for their stated fitness goal
 • Strictly avoid allergens without referencing them
 
 If the user purchased the 1 month plan:
-• Make a **4-week workout plan**, organized by week and detailed **day by day**
+• Make a **4-week workout plan**, organized by week and detailed **day by day each day for that whole week**
 • Make a **4-week meal plan**, broken down by week, and then by day with full meal guidance
 • Each meal and workout should reflect their training intensity, dietary goals, and allergies
 
@@ -80,12 +80,9 @@ If the user purchased the 1 month plan:
 
 Please use the following layout EXACTLY for the PDF:
 
-				BulkBot
 
-[User's Name] Personalized Fitness and Nutrition Plan  
-(centered with no symbols)
 
-Workout Plan
+[User's Name] 
 
 Day [X]:  
 Workout:  
@@ -101,7 +98,8 @@ Meal:
 
 (repeat for every day of the week)
 
-End with:  
+End the pdf with:  
+
 "Remember to hydrate and stay rested for best results.  
 [Include a short motivational note tied to the user’s specific fitness goal]
 
