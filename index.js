@@ -62,7 +62,7 @@ please make the pdf layout to this exact template:
 
 			BulkBot
 	
- [users name] personalized fitness and nutrition plan
+ [users name] personalized fitness and nutrition plan [centered with no symbols]
 
 
 Workout plan
@@ -97,15 +97,17 @@ Thank you for chosing BulkBot
 Do NOT use tables or charts. Format meals as clean text.
 
 **Requirements for the response:**
+- do not have # or any other symbols where not needed eg for spacing
+
 - the format should be as follows:
 - Name of user profile
 - then a formatted day by day detailed workout plan, with workout type, reps and weight
 - then the formatted detailed meal plan that helps them hit their goals based on current weights and workout regime
+- include macros for each meal to make it easier for user to track protien
 - please format in a chart for easy readabiity
-- Separate sections clearly with titles: "Workout Plan" and "Meal Plan"
 -
 - For workouts: list specific daily routines 
-- For meals: provide breakfast, lunch, dinner, and snack suggestions with portion guidance and recipes
+- For meals: provide breakfast, lunch, dinner, and snack suggestions with portion guidance and recipes and macros
 - Format it for readability and clarity in a PDF document
 
 Make the response professional, supportive, and customized to the user.`;
