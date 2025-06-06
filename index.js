@@ -155,7 +155,7 @@ This plan will be sold to customers. Treat it as a premium fitness product.
       const pdfData = Buffer.concat(buffers);
 
       const transporter = nodemailer.createTransport({
-        host: 'smtp.gmail.com',
+        host: 'smtp.zoho.com',
         port: 465,
         secure: true,
         auth: {
@@ -166,7 +166,7 @@ This plan will be sold to customers. Treat it as a premium fitness product.
 
       try {
         await transporter.sendMail({
-  from: `BulkBot <${process.env.ZOHO_EMAIL}>`,
+  from: `"BulkBot AI" <${process.env.ZOHO_EMAIL}>`,
   to: email,
   subject: 'Your Personalized Workout & Meal Plan 💪',
   text: 'Attached is your personalized plan!',
