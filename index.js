@@ -108,7 +108,8 @@ Thank you for choosing BulkBot."
 ---
 
 STRICT FORMAT RULES:
-- NEVER include tables, charts, or markdown symbols (#)
+- NEVER include tables or charts
+- NEVER include markdown symbols (#)
 - Meals must be formatted as plain text, sectioned by day and meal
 - Include estimated **calories + macros** for each meal: Protein, Carbs, Fat
 - No duplicated meals unless part of a structured cycle
@@ -116,6 +117,8 @@ STRICT FORMAT RULES:
 - Avoid filler — each day should have full detail for both workout and meals
 - Maintain clean structure for readability in a PDF
 - Tone should be expert, motivating, and supportive
+- Avoid using phrases like “without [allergen]” or “quinoa-free” — do not even use a recipe that calls for their allergen.
+
 
 This plan will be sold to customers. Treat it as a premium fitness product.
 `;
