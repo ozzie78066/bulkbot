@@ -69,15 +69,16 @@ Workout plan
 
 format each day of the week like 
 Day:
--
+
+workout
+
+-[workout type, reps and explanation]
 -
 -
 -
 
-and format the meal plan for each day as such:
-Meal plan
+Meal 
 
-Day 1
 -breakfast
 -lunch
 -dinner
