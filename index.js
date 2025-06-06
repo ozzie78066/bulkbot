@@ -60,7 +60,6 @@ Make sure that if it is a 1 week plan to include every day of the weeks workout 
 And the same for the month, this has to be a fully fledged product to sell.
 please make the pdf layout to this exact template:
 
-
 			BulkBot
 	
  [users name] personalized fitness and nutrition plan
@@ -68,13 +67,14 @@ please make the pdf layout to this exact template:
 
 Workout plan
 
-Day 1:
+format each day of the week like 
+Day:
 -
 -
 -
 -
-etc.
 
+and format the meal plan for each day as such:
 Meal plan
 
 Day 1
@@ -91,6 +91,7 @@ Remember to hydrate and stay rested for best results
 [include note to help with their goal]
 
 Thank you for chosing BulkBot
+
 
 Do NOT use tables or charts. Format meals as clean text.
 
