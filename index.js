@@ -130,7 +130,8 @@ Make the response professional, supportive, and customized to the user.`;
         res.status(500).send('Email failed');
       }
     });
-
+    doc.registerFont('OpenSans', 'fonts/OpenSans-Regular.ttf');
+    doc.font('OpenSans'); 
     doc.fontSize(12).text(planText);
     doc.end();
   } catch (err) {
