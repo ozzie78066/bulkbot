@@ -39,6 +39,10 @@ ${userInfo}
 ---
 
 **Requirements for the response:**
+- the format should be as follows:
+- Name of user profile
+- then a formatted day by day detailed workout plan, with workout type, reps and weight
+- then the formatted detailed meal plan that helps them hit their goals based on current weights and workout regime
 - No hashtags or markdown symbols (e.g., #)
 - Separate sections clearly with titles: "Workout Plan" and "Meal Plan"
 - Organize each plan weekly (Week 1–4)
