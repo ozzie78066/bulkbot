@@ -185,8 +185,8 @@ attachments: [
     content: pdfData,
   },
   {
-    filename: 'logo.png',
-    path: './logo.png', // this is correct based on your screenshot
+    filename: 'logo.jpg',
+    path: '\assets\logo.jpg', // this is correct based on your screenshot
     cid: 'logo'
   }
 ]
