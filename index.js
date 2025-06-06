@@ -159,8 +159,8 @@ This plan will be sold to customers. Treat it as a premium fitness product.
         port: 465,
         secure: true,
         auth: {
-          user: process.env.ZOHO_EMAIL,
-          pass: process.env.ZOHO_PASS,
+          user: 'oscar@bulkbot.store',
+          pass: 'kY75yXyEgHFz',
         },
       });
 
