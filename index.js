@@ -53,6 +53,7 @@ ${userInfo}
 Make the response professional, supportive, and customized to the user.`;
 
   try {
+    console.log("📤 Final prompt sent to OpenAI:\n", prompt);
     const completion = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages: [
