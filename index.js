@@ -17,7 +17,10 @@ app.post('/api/tally-webhook', async (req, res) => {
 
   console.log("\uD83E\uDDE0 Incoming Tally data:", data);
 
-  const email = data.email || process.env.ZOHO_EMAIL;
+  const emailField = (data.fields || []).find(
+  (f) => f.label.toLowerCase().includes('email') && typeof f.value === 'string'
+);
+const email = emailField?.value || process.env.ZOHO_EMAIL;
   if (!email) {
     console.error("\u274C No email found in webhook payload.");
     return res.status(400).send("Missing email.");
@@ -132,9 +135,13 @@ Make the response professional, supportive, and customized to the user.`;
     });
     doc.registerFont('Lora-SemiBold', 'fonts/Lora-SemiBold.ttf');
     doc.registerFont('BebasNeue-Regular', 'fonts/BebasNeue-Regular.ttf');
-    doc.font('BebasNeue-Regular').fontSize(16).text('Workout Plan');
+    doc.font('BebasNeue-Regular').fontSize(18).text('Your Personalized Plan', { align: 'center' });
     doc.moveDown();
-    doc.font('Lora-SemiBold').fontSize(14).text(planText);
+
+    doc.font('Lora-SemiBold').fontSize(14).text(planText, {
+    align: 'left',
+    lineGap: 4
+});
     doc.end();
   } catch (err) {
     console.error('❌ OpenAI or PDF error:', err);
