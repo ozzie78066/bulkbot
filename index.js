@@ -40,11 +40,18 @@ app.post('/api/tally-webhook', async (req, res) => {
     return `${field.label.trim()}: ${val}`;
   })
   .join('\n');
+  const planType = data.formName?.startsWith('4') ? '4 Week' : '1 Week';
 
-  const prompt = `You are a professional fitness and nutrition coach. Based on the following user profile, generate a highly detailed and structured personalized workout and meal plan:
+  const prompt = `
+  Create my customer a proffessional pdf file 
+  if the user purchased the 1 week plan then only make a 1 week long workout plan but please detail the workout day by day with direct instructions on what to do. And a 1 week long meal plan day by day breakfast lunch and dinner recipes, find new and interesting healthy meals that work for the clients diets and allergies. 
+  if the user purchased the 1 month plan then make a 1 month long workout plan and detail each week with each days workout and meal plan structured in a chart format so its easy to read.
+  the user has purchased the **${planType}** plan.
+  You are a professional fitness and nutrition coach. Based on the following user profile, generate a highly detailed and structured personalized workout and meal plan:
 
 ${userInfo}
 
+the user has purchased the **${planType}** plan.
 ---
 
 **Requirements for the response:**
@@ -52,11 +59,11 @@ ${userInfo}
 - Name of user profile
 - then a formatted day by day detailed workout plan, with workout type, reps and weight
 - then the formatted detailed meal plan that helps them hit their goals based on current weights and workout regime
-- No hashtags or markdown symbols (e.g., #)
+- please format in a chart for easy readabiity
 - Separate sections clearly with titles: "Workout Plan" and "Meal Plan"
-- Organize each plan weekly (Week 1–4)
-- For workouts: list specific daily routines (e.g., Day 1: Push-ups 3x15, Plank 3x1min, etc.)
-- For meals: provide breakfast, lunch, dinner, and snack suggestions with portion guidance
+-
+- For workouts: list specific daily routines 
+- For meals: provide breakfast, lunch, dinner, and snack suggestions with portion guidance and recipes
 - Format it for readability and clarity in a PDF document
 
 Make the response professional, supportive, and customized to the user.`;
