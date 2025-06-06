@@ -24,11 +24,18 @@ app.post('/api/tally-webhook', async (req, res) => {
   }
 
   console.log("🧪 Parsed incoming data:\n", JSON.stringify(data, null, 2));
-  const userInfo = Object.entries(data)
-    .map(([key, val]) => {
-    // If it's an array, join it nicely
-    const cleanVal = Array.isArray(val) ? val.join(', ') : val;
-    return `${key}: ${cleanVal}`;
+  const userInfo = data.fields
+    .map(field => {
+    const val = Array.isArray(field.value) ? field.value.join(', ') : field.value;
+    if (field.options) {
+      const optionMap = Object.fromEntries(field.options.map(o => [o.id, o.text]));
+      const readable = Array.isArray(field.value)
+        ? field.value.map(id => optionMap[id]).join(', ')
+        : optionMap[field.value] || val;
+      return `${field.label.trim()}: ${readable}`;
+    }
+
+    return `${field.label.trim()}: ${val}`;
   })
   .join('\n');
 
