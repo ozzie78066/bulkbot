@@ -144,20 +144,57 @@ Make the response professional, supportive, and customized to the user.`;
 
       try {
         await transporter.sendMail({
-          from: `BulkBot <${process.env.ZOHO_EMAIL}>`,
-          to: email,
-          subject: 'Your Custom Workout & Meal Plan',
-          text: 'Attached is your personalized plan! \n Thank you for chosing BulkBot',
-          attachments: [
-            {
-              filename: 'Plan.pdf',
-              content: pdfData,
-            },
-          ],
-        });
+  from: `BulkBot <${process.env.ZOHO_EMAIL}>`,
+  to: email,
+  subject: 'Your Personalized Workout & Meal Plan 💪',
+  text: 'Attached is your personalized plan!',
+  html: `
+  <div style="max-width: 600px; margin: auto; font-family: 'Segoe UI', Roboto, sans-serif; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);">
+    <div style="background: #121212; padding: 30px; text-align: center;">
+      <img src="cid:logo" alt="BulkBot Logo" style="width: 100px; height: auto; margin-bottom: 20px;" />
+      <h1 style="color: #ffffff; margin: 0; font-size: 26px;">Your Personalized Plan Awaits</h1>
+    </div>
 
-        console.log(`\uD83D\uDCE4 Plan emailed to ${email}`);
-        res.status(200).send('Plan emailed!');
+    <div style="padding: 30px;">
+      <p style="font-size: 16px; color: #333; line-height: 1.6;">
+        Hey there,
+        <br><br>
+        Thanks for trusting <strong>BulkBot</strong> with your fitness journey. 
+        Attached is your customized <strong>${planType}</strong> Workout & Meal Plan — built just for you using our AI-powered training engine.
+      </p>
+
+      <div style="margin: 30px 0; text-align: center;">
+        <a href="#" style="display: inline-block; background: #ff3c00; color: #fff; text-decoration: none; padding: 14px 26px; border-radius: 8px; font-weight: bold; font-size: 15px;">Download Attached Plan</a>
+      </div>
+
+      <p style="font-size: 15px; color: #555; line-height: 1.5;">
+        If you have any questions or want to tweak your program, just reply to this email and one of our trainers will help out.
+        <br><br>
+        Let’s get bigger, faster, stronger — together. 💪
+      </p>
+
+      <p style="font-size: 14px; color: #aaa; margin-top: 40px; text-align: center;">
+        Follow us on Instagram @BulkBotAI • Made with 💡 by Oscar
+      </p>
+    </div>
+  </div>
+`,
+attachments: [
+  {
+    filename: 'Plan.pdf',
+    content: pdfData,
+  },
+  {
+    filename: 'logo.jpg',
+    path: './logo.jpg', // this is correct based on your screenshot
+    cid: 'logo'
+  }
+]
+,
+      });
+
+      console.log(`📤 Plan emailed to ${email}`);
+      res.status(200).send('Plan emailed!');
       } catch (mailErr) {
         console.error('❌ Email failed:', mailErr);
         res.status(500).send('Email failed');
