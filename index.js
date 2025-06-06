@@ -44,7 +44,11 @@ const email = emailField?.value || process.env.ZOHO_EMAIL;
   })
   .join('\n');
   const planType = data.formName?.startsWith('4') ? '4 Week' : '1 Week';
-
+  const allergyField = data.fields.find(
+  f => f.label.toLowerCase().trim() === 'allergies'
+  );
+  const allergyNote = allergyField?.value || 'None';
+ 
   const prompt = `
   Create my customer a proffessional pdf file 
   if the user purchased the 1 week plan then only make a 1 week long workout plan but please detail the workout day by day with direct instructions on what to do. And a 1 week long meal plan day by day breakfast lunch and dinner recipes, find new and interesting healthy meals that work for the clients diets and allergies. 
@@ -53,7 +57,10 @@ const email = emailField?.value || process.env.ZOHO_EMAIL;
   You are a professional fitness and nutrition coach. Based on the following user profile, generate a highly detailed and structured personalized workout and meal plan:
 
 ${userInfo}
+IMPORTANT: The user has stated the following allergies and intolerances:
+DO NOT INCLUDE these ingredients in any meals under any circumstance.
 
+Allergens: ${allergyNote || 'None'}
 the user has purchased the **${planType}** plan.
 ---
 Make sure that if it is a 1 week plan to include every day of the weeks workout and meal (all 7 days)
