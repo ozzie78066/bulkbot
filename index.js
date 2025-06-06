@@ -186,7 +186,7 @@ attachments: [
   },
   {
     filename: 'logo.jpg',
-    path: '\assets\logo.jpg', // this is correct based on your screenshot
+    path: './assets/logo.jpg', 
     cid: 'logo'
   }
 ]
