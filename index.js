@@ -25,13 +25,15 @@ app.post('/api/tally-webhook', async (req, res) => {
 
   console.log("🧪 Parsed incoming data:\n", JSON.stringify(data, null, 2));
   const userInfo = data.fields
-    .map(field => {
+  .map(field => {
     const val = Array.isArray(field.value) ? field.value.join(', ') : field.value;
+
+    // If dropdown, replace ID with label
     if (field.options) {
       const optionMap = Object.fromEntries(field.options.map(o => [o.id, o.text]));
       const readable = Array.isArray(field.value)
-        ? field.value.map(id => optionMap[id]).join(', ')
-        : optionMap[field.value] || val;
+        ? field.value.map(id => optionMap[id] || id).join(', ')
+        : optionMap[val] || val;
       return `${field.label.trim()}: ${readable}`;
     }
 
