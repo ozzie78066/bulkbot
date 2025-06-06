@@ -50,74 +50,77 @@ const email = emailField?.value || process.env.ZOHO_EMAIL;
   const allergyNote = allergyField?.value || 'None';
  
   const prompt = `
-  Create my customer a proffessional pdf file 
-  if the user purchased the 1 week plan then only make a 1 week long workout plan but please detail the workout day by day with direct instructions on what to do. And a 1 week long meal plan day by day breakfast lunch and dinner recipes,find new and interesting healthy meals that strictly avoid any of the user’s allergies, without mentioning or referencing them in the meal descriptions.
-  if the user purchased the 1 month plan then make a 1 month long workout plan and detail each week with each days workout and meal plan structured in week blocks.
-  the user has purchased the **${planType}** plan.
-  You are a professional fitness and nutrition coach. Based on the following user profile, generate a highly detailed and structured personalized workout and meal plan:
+  Create my customer a professional PDF file.
+
+The user has purchased the **${planType}** plan.
+
+You are a professional fitness and nutrition coach. Based on the following user profile, generate a highly detailed and structured personalized workout and meal plan:
 
 ${userInfo}
-IMPORTANT: The user has stated the following allergies and intolerances:
-DO NOT INCLUDE these ingredients in any meals under any circumstance.
 
-Allergens: ${allergyNote || 'None'}
-the user has purchased the **${planType}** plan.
+IMPORTANT:  
+The user has stated the following allergies and intolerances:  
+Allergens: ${allergyNote || 'None'}  
+These ingredients MUST NOT be included in any meals. Do NOT mention or reference them in any way — just silently exclude them.
+
 ---
-Make sure that if it is a 1 week plan to include every day of the weeks workout and meal (all 7 days)
-And the same for the month, this has to be a fully fledged product to sell.
-please make the pdf layout to this exact template:
 
-			BulkBot
-	
- [users name] personalized fitness and nutrition plan [centered with no symbols]
+If the user purchased the 1 week plan:
+• Make a **1-week workout plan**, detailing workouts **day by day**
+• Make a **1-week meal plan**, including breakfast, lunch, dinner, and snack for **each day**
+• Each recipe must be unique, healthy, and suitable for their stated fitness goal
+• Strictly avoid allergens without referencing them
 
+If the user purchased the 1 month plan:
+• Make a **4-week workout plan**, organized by week and detailed **day by day**
+• Make a **4-week meal plan**, broken down by week, and then by day with full meal guidance
+• Each meal and workout should reflect their training intensity, dietary goals, and allergies
 
-Workout plan
+---
 
-format each day of the week like 
-Day:
+Please use the following layout EXACTLY for the PDF:
 
-workout
+				BulkBot
 
--[workout type, reps and explanation]
--
--
--
+[User's Name] Personalized Fitness and Nutrition Plan  
+(centered with no symbols)
 
-Meal 
+Workout Plan
 
--breakfast
--lunch
--dinner
--snack
+Day [X]:  
+Workout:  
+- [Workout name, reps, sets, weight or bodyweight, form notes]  
+- ...  
+- ...  
 
-etc
+Meal:  
+- Breakfast: [Name + short recipe + macros]  
+- Lunch: ...  
+- Dinner: ...  
+- Snack: ...
 
+(repeat for every day of the week)
 
+End with:  
+"Remember to hydrate and stay rested for best results.  
+[Include a short motivational note tied to the user’s specific fitness goal]
 
-Remember to hydrate and stay rested for best results
-[include note to help with their goal]
+Thank you for choosing BulkBot."
 
-Thank you for chosing BulkBot
+---
 
+STRICT FORMAT RULES:
+- NEVER include tables, charts, or markdown symbols (#)
+- Meals must be formatted as plain text, sectioned by day and meal
+- Include estimated **calories + macros** for each meal: Protein, Carbs, Fat
+- No duplicated meals unless part of a structured cycle
+- Do not mention allergies or restrictions in the plan — just respect them
+- Avoid filler — each day should have full detail for both workout and meals
+- Maintain clean structure for readability in a PDF
+- Tone should be expert, motivating, and supportive
 
-Do NOT use tables or charts. Format meals as clean text.
-
-**Requirements for the response:**
-- do not have # or any other symbols where not needed eg for spacing
-
-- the format should be as follows:
-- Name of user profile
-- then a formatted day by day detailed workout plan, with workout type, reps and weight
-- then the formatted detailed meal plan that helps them hit their goals based on current weights and workout regime
-- include macros for each meal to make it easier for user to track protien
-- please format in a chart for easy readabiity
--
-- For workouts: list specific daily routines 
-- For meals: provide breakfast, lunch, dinner, and snack suggestions with portion guidance and recipes and macros
-- Format it for readability and clarity in a PDF document
-
-Make the response professional, supportive, and customized to the user.`;
+This plan will be sold to customers. Treat it as a premium fitness product.
+`;
 
   try {
     console.log("📤 Final prompt sent to OpenAI:\n", prompt);
