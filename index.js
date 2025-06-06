@@ -56,6 +56,8 @@ ${userInfo}
 
 the user has purchased the **${planType}** plan.
 ---
+Make sure that if it is a 1 week plan to include every day of the weeks workout and meal (all 7 days)
+And the same for the month, this has to be a fully fledged product to sell.
 please make the pdf layout to this exact template:
 
 
