@@ -150,7 +150,7 @@ Make the response professional, supportive, and customized to the user.`;
   text: 'Attached is your personalized plan!',
   html: `
   <div style="max-width: 600px; margin: auto; font-family: 'Segoe UI', Roboto, sans-serif; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);">
-    <div style="background: #121212; padding: 30px; text-align: center;">
+    <div style="background: #101e29; padding: 30px; text-align: center;">
       <img src="cid:logo" alt="BulkBot Logo" style="width: 100px; height: auto; margin-bottom: 20px;" />
       <h1 style="color: #ffffff; margin: 0; font-size: 26px;">Your Personalized Plan Awaits</h1>
     </div>
@@ -164,17 +164,17 @@ Make the response professional, supportive, and customized to the user.`;
       </p>
 
       <div style="margin: 30px 0; text-align: center;">
-        <a href="#" style="display: inline-block; background: #ff3c00; color: #fff; text-decoration: none; padding: 14px 26px; border-radius: 8px; font-weight: bold; font-size: 15px;">Download Attached Plan</a>
+        <a href="#" style="display: inline-block; background: #ff3c00; color: #fff; text-decoration: none; padding: 14px 26px; border-radius: 8px; font-weight: bold; font-size: 15px;">Download Attached Plan Below</a>
       </div>
 
       <p style="font-size: 15px; color: #555; line-height: 1.5;">
-        If you have any questions or want to tweak your program, just reply to this email and one of our trainers will help out.
+        If you have any suggestions please email us at plans@bulkbot.store
         <br><br>
         Let’s get bigger, faster, stronger — together. 💪
       </p>
 
       <p style="font-size: 14px; color: #aaa; margin-top: 40px; text-align: center;">
-        Follow us on Instagram @BulkBotAI • Made with 💡 by Oscar
+        Follow us on Instagram and tik tok @BulkBotAI
       </p>
     </div>
   </div>
