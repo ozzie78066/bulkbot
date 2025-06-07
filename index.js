@@ -57,74 +57,74 @@ const handleWebhook = async (req, res, planType) => {
   const allergyNote = allergyField?.value || 'None';
 
   const prompt = `
-  Create my customer a professional PDF file.
+    Create my customer a professional PDF file.
 
-The user has purchased the **${planType}** plan.
+    The user has purchased the **${planType}** plan.
 
-You are a professional fitness and nutrition coach. Based on the following user profile, generate a highly detailed and structured personalized workout and meal plan:
+    You are a professional fitness and nutrition coach. Based on the following user profile, generate a highly detailed and structured personalized workout and meal plan:
 
-${userInfo}
+    ${userInfo}
 
-IMPORTANT:  
-The user has stated the following allergies and intolerances:  
-Allergens: ${allergyNote || 'None'}  
-These ingredients MUST NOT be included in any meals. Do NOT mention or reference them in any way — just silently exclude them.
-do not even use a recipe that calls for their allergen.
----
+    IMPORTANT:  
+    The user has stated the following allergies and intolerances:  
+    Allergens: ${allergyNote || 'None'}  
+    These ingredients MUST NOT be included in any meals. Do NOT mention or reference them in any way — just silently exclude them.
+    do not even use a recipe that calls for their allergen.
+    ---
 
-If the user purchased the 1 week plan:
-• Make a **1-week workout plan**, detailing workouts **day by day all 7 days monday to sunday**
-• Make a **1-week meal plan**, including breakfast, lunch, dinner, and snack for **each day monday to sunday**
-• Each recipe must be unique, healthy, and suitable for their stated fitness goal
-• Strictly avoid allergens without referencing them
+    ${planType === '1 Week' ? `
+    • Make a **1-week workout plan**, detailing workouts **day by day all 7 days monday to sunday**
+    • Make a **1-week meal plan**, including breakfast, lunch, dinner, and snack for **each day monday to sunday**
+    ` : `
+    • Make a **4-week workout plan**, organized by week and detailed **day by day each day for that whole week**
+    • Make a **4-week meal plan**, broken down by week, and then by day with full meal guidance
+    `}
 
-If the user purchased the 1 month plan:
-• Make a **4-week workout plan**, organized by week and detailed **day by day each day for that whole week**
-• Make a **4-week meal plan**, broken down by week, and then by day with full meal guidance
-• Each meal and workout should reflect their training intensity, dietary goals, and allergies
+    Each recipe must be unique, healthy, and suitable for their stated fitness goal
+    Strictly avoid allergens without referencing them
 
----
+    ---
 
-Please use the following layout EXACTLY for the PDF:
+    Please use the following layout EXACTLY for the PDF:
 
-[User's Name] 
+    [User's Name] 
 
-Day [X]:  
-Workout:  
-- [Workout name, reps, sets, weight or bodyweight, form notes]  
-- ...  
-- ...  
+    Day [X]:  
+    Workout:  
+    - [Workout name, reps, sets, weight or bodyweight, form notes]  
+    - ...  
+    - ...  
 
-Meal:  
-- Breakfast: [Name + short recipe + macros]  
-- Lunch: ...  
-- Dinner: ...  
-- Snack: ...
+    Meal:  
+    - Breakfast: [Name + short recipe + macros]  
+    - Lunch: ...  
+    - Dinner: ...  
+    - Snack: ...
 
-(repeat for every day of the week)
+    (repeat for every day of the week)
 
-End the pdf with:  
+    End the pdf with:  
 
-"Remember to hydrate and stay rested for best results.  
-[Include a short motivational note tied to the user’s specific fitness goal]
+    "Remember to hydrate and stay rested for best results.  
+    [Include a short motivational note tied to the user’s specific fitness goal]
 
-Thank you for choosing BulkBot."
+    Thank you for choosing BulkBot."
 
----
+    ---
 
-STRICT FORMAT RULES:
-- NEVER include tables or charts
-- NEVER include markdown symbols (#)
-- Meals must be formatted as plain text, sectioned by day and meal
-- Include estimated **calories + macros** for each meal: Protein, Carbs, Fat
-- No duplicated meals unless part of a structured cycle
-- Do not mention allergies or restrictions in the plan — just respect them
-- Avoid filler — each day should have full detail for both workout and meals
-- Maintain clean structure for readability in a PDF
-- Tone should be expert, motivating, and supportive
+    STRICT FORMAT RULES:
+    - NEVER include tables or charts
+    - NEVER include markdown symbols (#)
+    - Meals must be formatted as plain text, sectioned by day and meal
+    - Include estimated **calories + macros** for each meal: Protein, Carbs, Fat
+    - No duplicated meals unless part of a structured cycle
+    - Do not mention allergies or restrictions in the plan — just respect them
+    - Avoid filler — each day should have full detail for both workout and meals
+    - Maintain clean structure for readability in a PDF
+    - Tone should be expert, motivating, and supportive
 
-This plan will be sold to customers. Treat it as a premium fitness product.
-`;
+    This plan will be sold to customers. Treat it as a premium fitness product.
+  `;
 
   try {
     console.log('🧾 Final prompt sent to OpenAI:\n', prompt);
@@ -162,32 +162,7 @@ This plan will be sold to customers. Treat it as a premium fitness product.
           to: email,
           subject: 'Your Personalized Workout & Meal Plan 💪',
           text: 'Attached is your personalized plan!',
-          html: `
-          <div style="max-width: 600px; margin: auto; font-family: 'Segoe UI', Roboto, sans-serif; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);">
-            <div style="background: #101e29; padding: 30px; text-align: center;">
-              <img src="cid:logo" alt="BulkBot Logo" style="width: 100px; height: auto; margin-bottom: 20px;" />
-              <h1 style="color: #ffffff; margin: 0; font-size: 26px;">Your Personalized Plan Awaits</h1>
-            </div>
-
-            <div style="padding: 30px;">
-              <p style="font-size: 16px; color: #333; line-height: 1.6;">
-                Hey there,<br><br>
-                Thanks for trusting <strong>BulkBot</strong> with your fitness journey. 
-                Attached is your customized <strong>${planType}</strong> Workout & Meal Plan — built just for you using our AI-powered training engine.
-              </p>
-              <div style="margin: 30px 0; text-align: center;">
-                <a href="#" style="display: inline-block; background: #ff3c00; color: #fff; text-decoration: none; padding: 14px 26px; border-radius: 8px; font-weight: bold; font-size: 15px;">Download Attached Plan Below</a>
-              </div>
-              <p style="font-size: 15px; color: #555; line-height: 1.5;">
-                If you have any suggestions please email us at plans@bulkbot.store
-                <br><br>
-                Let’s get bigger, faster, stronger — together. 💪
-              </p>
-              <p style="font-size: 14px; color: #aaa; margin-top: 40px; text-align: center;">
-                Follow us on Instagram and TikTok @BulkBotAI
-              </p>
-            </div>
-          </div>`,
+          html: `<div>See attached plan.</div>`,
           attachments: [
             {
               filename: 'Plan.pdf',
