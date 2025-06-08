@@ -224,8 +224,13 @@ Treat this as a professional deliverable for a paying customer. Output must be p
 
     doc.registerFont('Lora-SemiBold', 'fonts/Lora-SemiBold.ttf');
     doc.registerFont('BebasNeue-Regular', 'fonts/BebasNeue-Regular.ttf');
-    doc.font('BebasNeue-Regular').fontSize(18).text('Your Personalized Plan', { align: 'center' });
+    doc.image('./assets/logo.jpg', { width: 120, align: 'center' });
     doc.moveDown();
+    doc.font('BebasNeue-Regular').fontSize(24).fillColor('#0066ff').text('Your Personalized Fitness Plan', { align: 'center' });
+    doc.moveDown();
+    doc.fontSize(16).fillColor('#000').text(`Client: ${email}`, { align: 'center' });
+    doc.addPage();
+
 
     doc.font('Lora-SemiBold').fontSize(14).text(planText, {
       align: 'left',
