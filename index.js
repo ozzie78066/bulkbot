@@ -88,7 +88,11 @@ const handleWebhook = async (req, res, planType) => {
   const emailField = (data.fields || []).find(
     (f) => f.label.toLowerCase().includes('email') && typeof f.value === 'string'
   );
+  const nameField = (data.fields || []).find(
+    (f) => f.label.toLowerCase().includes('name') && typeof f.value === 'string'
+  );
   const email = emailField?.value || process.env.ZOHO_EMAIL;
+  const name = nameField?.value || 'Client';
   if (!email) {
     console.error("❌ No email found in webhook payload.");
     return res.status(400).send("Missing email.");
@@ -190,14 +194,15 @@ const handleWebhook = async (req, res, planType) => {
     doc.moveDown();
     doc.font('BebasNeue-Regular').fontSize(24).fillColor('#0066ff').text('Your Personalized Fitness Plan', { align: 'center' });
     doc.moveDown();
-    doc.fontSize(16).fillColor('#000').text(`Client: ${email}`, { align: 'center' });
+    doc.fontSize(16).fillColor('#000').text(`Client: ${name}`, { align: 'center' });
     doc.addPage();
 
-    const weekSections = fullPlanText.split(/(?=\bWeek [1-4]\b)/g);
+    const weekRegex = /Week (\d)/g;
+    const matches = [...fullPlanText.matchAll(weekRegex)].map(m => m[1]);
+    const weekSections = fullPlanText.split(/(?=Week \d)/);
     weekSections.forEach((section, i) => {
       if (i > 0) doc.addPage();
-      const weekMatch = section.match(/Week (\d)/);
-      const weekLabel = weekMatch ? `Week ${weekMatch[1]}` : `Week ${i + 1}`;
+      const weekLabel = matches[i - 1] ? `Week ${matches[i - 1]}` : `Week ${i + 1}`;
       doc.font('BebasNeue-Regular').fontSize(20).fillColor('#0066ff').text(weekLabel, { align: 'center' });
       doc.moveDown();
       doc.font('Lora-SemiBold').fontSize(14).fillColor('#000000').text(section.trim(), {
