@@ -57,11 +57,6 @@ Meal:
 
 ---
 
-At the end include:
-“Stay hydrated, consistent and well rested and results will come.  
-Thank you for choosing BulkBot.”
-
----
 
 STRICT RULES:
 - NO tables, bullets, or markdown symbols
