@@ -57,7 +57,7 @@ const handleWebhook = async (req, res, planType) => {
   const allergyNote = allergyField?.value || 'None';
 
   const prompt = `
-    You are a professional fitness and nutrition expert creating personalized PDF workout and meal plans for paying clients.
+You are a professional fitness and nutrition expert creating personalized PDF workout and meal plans for paying clients.
 
 A customer has purchased the **${planType}** plan. Use the following profile data to create a fully customized plan:
 
@@ -78,10 +78,15 @@ You must create:
 - A complete 1-week workout plan (7 days: Monday to Sunday)
 - A complete 1-week meal plan (each day includes: Breakfast, Lunch, Dinner, Snack)
 ` : `
-You must create:
+You must now generate a complete, high-detail fitness and nutrition plan.
 
-- A full 4-week workout plan (organized by week, with 7 days per week of unique workouts)
-- A full 4-week meal plan (structured by week > day > meal, each day includes: Breakfast, Lunch, Dinner, Snack)
+You must include:
+- A 4-week workout plan: broken down by **Week > Day**, each day with multiple exercises, sets, reps, and intensity guidance.
+- A 4-week meal plan: broken down by **Week > Day**, with four meals per day (Breakfast, Lunch, Dinner, Snack), each showing estimated calories and macros.
+
+❗ You MUST write **all 28 days** (4 weeks x 7 days).  
+❗ Do NOT summarize or generalize any weeks — this is a paid product.  
+Each day must be unique and explicitly written out.
 `}
 Ensure all workouts and meals support the user’s fitness goal. Each meal and workout must be unique and varied, not copy-pasted.
 
