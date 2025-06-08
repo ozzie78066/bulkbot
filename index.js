@@ -211,12 +211,15 @@ const handleWebhook = async (req, res, planType) => {
       });
     });
 
-    doc.moveDown(2);
-    doc.font('Lora-SemiBold').fontSize(14).fillColor('#000000').text(`Stay hydrated, consistent and well rested and results will come.\nThank you for choosing BulkBot.`, {
-      align: 'center'
-    });
+    
 
-    doc.end();
+    doc.moveDown(2);
+doc.font('Lora-SemiBold').fontSize(14).fillColor('#000000').text(`Stay hydrated, consistent and well rested and results will come.
+Thank you for choosing BulkBot.`, {
+  align: 'center'
+});
+
+doc.end();
   } catch (err) {
     console.error('❌ Error:', err);
     res.status(500).send('Plan generation failed');
