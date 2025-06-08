@@ -59,7 +59,7 @@ const handleWebhook = async (req, res, planType) => {
   const prompt = `
 You are a professional fitness and nutrition expert creating personalized PDF workout and meal plans for paying clients.
 
-A customer has purchased the **${planType}** plan. Use the following profile data to create a fully customized plan:
+A customer has purchased the **${planType}** plan. carefully analyze the following profile data to create a fully customized plan:
 
 ${userInfo}
 
@@ -87,6 +87,9 @@ You must include:
 ❗ You MUST write **all 28 days** (4 weeks x 7 days).  
 ❗ Do NOT summarize or generalize any weeks — this is a paid product.  
 Each day must be unique and explicitly written out.
+❗ UNDER NO CIRCUMSTANCES may you use summaries like "continue similar meals" or "repeat workout structure".
+❗ You are required to write out all individual days, meals, and workouts in full.
+❗ This is a product being sold. Any summarization or skipping will result in delivery failure.
 `}
 Ensure all workouts and meals support the user’s fitness goal. Each meal and workout must be unique and varied, not copy-pasted.
 
@@ -137,7 +140,8 @@ Treat this as a professional deliverable for a paying customer. Output must be p
         { role: 'system', content: 'You are a fitness and nutrition expert.' },
         { role: 'user', content: prompt }
       ],
-      temperature: 0.8,
+      temperature: 0.4,
+      max_tokens: 10000
     });
 
     const planText = completion.choices[0].message.content;
