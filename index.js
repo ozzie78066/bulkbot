@@ -57,79 +57,74 @@ const handleWebhook = async (req, res, planType) => {
   const allergyNote = allergyField?.value || 'None';
 
   const prompt = `
-    Create my customer a professional PDF file.
+    You are a professional fitness and nutrition expert creating personalized PDF workout and meal plans for paying clients.
 
-    The user has purchased the **${planType}** plan.
+A customer has purchased the **${planType}** plan. Use the following profile data to create a fully customized plan:
 
-    You are a professional fitness and nutrition coach. Based on the following user profile, generate a highly detailed and structured personalized workout and meal plan:
+${userInfo}
 
-    ${userInfo}
+❗️IMPORTANT:
+The user has the following allergies/intolerances:  
+**${allergyNote || 'None'}**  
+Exclude these allergens from all recipes. Do NOT mention or reference them — just silently avoid them in all meals.
 
-    IMPORTANT:  
-    The user has stated the following allergies and intolerances:  
-    Allergens: ${allergyNote || 'None'}  
-    These ingredients MUST NOT be included in any meals. Do NOT mention or reference them in any way — just silently exclude them.
-    do not even use a recipe that calls for their allergen.
-    ---
+---
 
-    ${planType === '1 Week' ? `
-    • Make a **1-week workout plan**, detailing workouts **day by day all 7 days monday to sunday**
-    • Make a **1-week meal plan**, including breakfast, lunch, dinner, and snack for **each day monday to sunday**
-    ` : `
-    • Make a **4-week workout plan**, organized by week and detailed **day by day each day for that whole week**
-    • Make a **4-week meal plan**, broken down by week, and then by day with full meal guidance
-    `}
+✅ Generate the plan based on the type selected:
 
-    Each recipe must be unique, healthy, and suitable for their stated fitness goal
-    Strictly avoid allergens without referencing them
+${planType === '1 Week' ? `
+• A complete **1-week workout plan** — one workout per day, Monday to Sunday.  
+• A complete **1-week meal plan** — including **Breakfast, Lunch, Dinner, and Snack** per day.  
+` : `
+• A full **4-week workout plan** — structured by week, detailed by day (7 days per week).  
+• A full **4-week meal plan** — broken into weeks, then days, each with **Breakfast, Lunch, Dinner, and Snack**.  
+`}
 
-    ---
+Ensure all workouts and meals support the user’s fitness goal. Each meal and workout must be unique and varied, not copy-pasted.
 
-    Please use the following layout EXACTLY for the PDF:
+---
 
-    [User's Name] 
+📄 FORMAT (Must be followed exactly for PDF readability):
 
-    Day [X]:  
-    Workout:  
-    - [Workout name, reps, sets, weight or bodyweight, form notes]  
-    - ...  
-    - ...  
+[User’s Name]
 
-    Meal:  
-    - Breakfast: [Name + short recipe + macros]  
-    - Lunch: ...  
-    - Dinner: ...  
-    - Snack: ...
+Day [X]:  
+Workout:  
+- [Exercise name, sets x reps, intensity or weight, form tips]  
+- ...  
+- ...  
 
-    (repeat for every day of the week)
+Meal:  
+- Breakfast: [Name + short recipe or ingredients + estimated macros]  
+- Lunch: ...  
+- Dinner: ...  
+- Snack: ...
 
-    End the pdf with:  
+---
 
-    "Remember to hydrate and stay rested for best results.  
-    [Include a short motivational note tied to the user’s specific fitness goal]
+📌 PDF End Section:
+"Remember to hydrate and stay rested for best results.  
+[Include a motivational line tied to their fitness goal]
 
-    Thank you for choosing BulkBot."
+Thank you for choosing BulkBot."
 
-    ---
+---
 
-    STRICT FORMAT RULES:
-    - NEVER include tables or charts
-    - NEVER include markdown symbols (#)
-    - Meals must be formatted as plain text, sectioned by day and meal
-    - Include estimated **calories + macros** for each meal: Protein, Carbs, Fat
-    - No duplicated meals unless part of a structured cycle
-    - Do not mention allergies or restrictions in the plan — just respect them
-    - Avoid filler — each day should have full detail for both workout and meals
-    - Maintain clean structure for readability in a PDF
-    - Tone should be expert, motivating, and supportive
+🧾 STRICT RULES:
+- DO NOT include tables, bullet symbols, or markdown (#, *, etc.)
+- Meals and workouts must be plain text and structured cleanly for PDF output
+- Every meal must show estimated **Calories**, **Protein**, **Carbs**, and **Fats**
+- Do not mention allergies or dietary restrictions — just respect them quietly
+- Avoid filler text — keep every day detailed and high-quality
+- Tone: **Expert, positive, supportive, premium-quality**
 
-    This plan will be sold to customers. Treat it as a premium fitness product.
+Treat this as a professional deliverable for a paying customer. Output must be polished and consistent.
   `;
 
   try {
     console.log('🧾 Final prompt sent to OpenAI:\n', prompt);
     const completion = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
+      model: 'gpt-4o',
       messages: [
         { role: 'system', content: 'You are a fitness and nutrition expert.' },
         { role: 'user', content: prompt }
