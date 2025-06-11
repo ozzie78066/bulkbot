@@ -116,6 +116,7 @@ app.post('/webhook/shopify', async (req, res) => {
   }
 });
 const handleWebhook = async (req, res, planType) => {
+  console.log("🤖 Incoming Tally submission:", JSON.stringify(req.body, null, 2));
   const raw = req.body;
   const data = raw.data || raw;
   const submissionId = data.submissionId;
