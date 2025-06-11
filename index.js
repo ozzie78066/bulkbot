@@ -10,7 +10,7 @@ const app = express();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 app.use(bodyParser.json());
-app.use(express.raw({ type: 'application/json' }));
+
 
 const processedSubmissions = new Set();
 const validTokens = new Map(); // token -> { used: boolean, email: string, planType: string }
@@ -72,8 +72,7 @@ STRICT RULES:
 
 app.post('/webhook/shopify', async (req, res) => {
   try {
-    const rawBody = req.body.toString('utf8');
-    const shopifyData = JSON.parse(rawBody);
+    const shopifyData = req.body;
 
     const email = shopifyData.email;
     const lineItems = shopifyData.line_items || [];
