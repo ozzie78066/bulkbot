@@ -86,7 +86,7 @@ app.post('/webhook/shopify', async (req, res) => {
     const token = crypto.randomBytes(16).toString('hex');
     validTokens.set(token, { used: false, email, planType });
 
-    const tallyURL = `https://tally.so/r/YOUR_FORM_ID?token=${token}`;
+    const tallyURL = `https://tally.so/r/wzRD1g?token=${token}`;
 
     const transporter = nodemailer.createTransport({
       service: 'gmail',
