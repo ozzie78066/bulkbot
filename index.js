@@ -124,7 +124,8 @@ const handleWebhook = async (req, res, planType) => {
   const tokenField = (data.fields || []).find(
   (f) => typeof f.label === 'string' && f.label.toLowerCase().trim() === 'token'
 );
-  const token = tokenField?.value;
+  const token = typeof tokenField?.value === 'string' ? tokenField.value : null;
+
   const tokenMeta = token && validTokens.get(token);
 
   if (!tokenMeta) return res.status(401).send('Invalid token');
