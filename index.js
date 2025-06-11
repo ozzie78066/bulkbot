@@ -122,8 +122,8 @@ const handleWebhook = async (req, res, planType) => {
   const submissionId = data.submissionId;
 
   const tokenField = (data.fields || []).find(
-  (f) => f.label.toLowerCase().trim() === 'token'
-  );
+  (f) => typeof f.label === 'string' && f.label.toLowerCase().trim() === 'token'
+);
   const token = tokenField?.value;
   const tokenMeta = token && validTokens.get(token);
 
