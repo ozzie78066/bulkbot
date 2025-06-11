@@ -116,6 +116,164 @@ app.post('/webhook/shopify', async (req, res) => {
     res.status(500).send('Server error');
   }
 });
+const handleWebhook = async (req, res, planType) => {
+  const raw = req.body;
+  const data = raw.data || raw;
+  const submissionId = data.submissionId;
+
+  const token = data.token;
+  const tokenMeta = token && validTokens.get(token);
+
+  if (!tokenMeta) return res.status(401).send('Invalid token');
+  if (tokenMeta.used) return res.status(409).send('Token already used');
+  if (tokenMeta.planType !== planType) return res.status(400).send('Token / plan mismatch');
+
+  tokenMeta.used = true;
+
+  if (processedSubmissions.has(submissionId)) {
+    console.log(`⚠️ Duplicate submission ${submissionId} ignored`);
+    return res.status(200).send("Already processed");
+  }
+  processedSubmissions.add(submissionId);
+  setTimeout(() => processedSubmissions.delete(submissionId), 15 * 60 * 1000);
+
+  const emailField = (data.fields || []).find(
+    (f) => f.label.toLowerCase().includes('email') && typeof f.value === 'string'
+  );
+  const nameField = (data.fields || []).find(
+    (f) => f.label.toLowerCase().includes('name') && typeof f.value === 'string'
+  );
+  const email = emailField?.value || tokenMeta.email || process.env.ZOHO_EMAIL;
+  const name = nameField?.value || 'Client';
+  if (!email) {
+    console.error("❌ No email found in webhook payload.");
+    return res.status(400).send("Missing email.");
+  }
+
+  const userInfo = data.fields.map(field => {
+    const val = Array.isArray(field.value) ? field.value.join(', ') : field.value;
+    if (field.options) {
+      const optionMap = Object.fromEntries(field.options.map(o => [o.id, o.text]));
+      const readable = Array.isArray(field.value)
+        ? field.value.map(id => optionMap[id] || id).join(', ')
+        : optionMap[val] || val;
+      return `${field.label.trim()}: ${readable}`;
+    }
+    return `${field.label.trim()}: ${val}`;
+  }).join('\n');
+
+  const allergyField = data.fields.find(f => f.label.toLowerCase().trim() === 'allergies');
+  const allergyNote = allergyField?.value || 'None';
+
+  const getPlanChunk = async (prompt) => {
+    console.log("📤 Sending prompt to OpenAI:\n", prompt);
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o',
+      messages: [
+        { role: 'system', content: 'You are a fitness and nutrition expert.' },
+        { role: 'user', content: prompt }
+      ],
+      temperature: 0.4,
+      max_tokens: 10000
+    });
+    return response.choices[0].message.content;
+  };
+
+  try {
+    let fullPlanText = '';
+    if (planType === '4 Week') {
+      const prompt1 = buildPrompt(userInfo, allergyNote, planType, 1);
+      const prompt2 = buildPrompt(userInfo, allergyNote, planType, 2);
+      const chunk1 = await getPlanChunk(prompt1);
+      const chunk2 = await getPlanChunk(prompt2);
+
+      fullPlanText = `${chunk1}\n\n---\n\n${chunk2}`;
+    } else {
+      const prompt = buildPrompt(userInfo, allergyNote, planType);
+      fullPlanText = await getPlanChunk(prompt);
+    }
+
+    const doc = new PDFKit();
+    const buffers = [];
+
+    doc.on('data', buffers.push.bind(buffers));
+    doc.on('end', async () => {
+      const pdfData = Buffer.concat(buffers);
+
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: process.env.MAIL_USER || 'bulkbotplans@gmail.com',
+          pass: process.env.MAIL_PASS
+        }
+      });
+
+      await transporter.sendMail({
+        from: 'BulkBot AI <bulkbotplans@gmail.com>',
+        to: email,
+        subject: 'Your Personalized Workout & Meal Plan 💪',
+        text: 'Attached is your personalized plan.',
+        html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; background: #ffffff; border: 1px solid #e0e0e0; padding: 30px; border-radius: 10px;">
+          <div style="text-align: center;">
+            <img src="cid:logo" alt="BulkBot Logo" style="width: 120px; margin-bottom: 20px;" />
+            <h2 style="color: #333333;">Your Personalized Plan Has Arrived 🎉</h2>
+          </div>
+          <p>Thank you for choosing <strong>BulkBot AI</strong>. Your custom workout and meal plan is attached.</p>
+        </div>
+        `,
+        attachments: [
+          {
+            filename: 'Plan.pdf',
+            content: pdfData,
+          },
+          {
+            filename: 'logo.jpg',
+            path: './assets/logo.jpg',
+            cid: 'logo'
+          }
+        ]
+      });
+
+      console.log(`📤 Plan emailed to ${email}`);
+      res.status(200).send('Plan emailed!');
+    });
+
+    doc.registerFont('Lora-SemiBold', 'fonts/Lora-SemiBold.ttf');
+    doc.registerFont('BebasNeue-Regular', 'fonts/BebasNeue-Regular.ttf');
+
+    doc.image('./assets/logo.jpg', { width: 120, align: 'center' });
+    doc.moveDown();
+    doc.font('BebasNeue-Regular').fontSize(24).fillColor('#0066ff').text('Your Personalized Fitness Plan', { align: 'center' });
+    doc.moveDown();
+    doc.fontSize(16).fillColor('#000').text(`Client: ${name}`, { align: 'center' });
+    doc.addPage();
+
+    const weekRegex = /Week (\\d)/g;
+    const matches = [...fullPlanText.matchAll(weekRegex)].map(m => m[1]);
+    const weekSections = fullPlanText.split(/(?=Week \\d)/);
+    weekSections.forEach((section, i) => {
+      if (i > 0) doc.addPage();
+      const weekLabel = matches[i - 1] ? `Week ${matches[i - 1]}` : `Week ${i + 1}`;
+      doc.font('BebasNeue-Regular').fontSize(20).fillColor('#0066ff').text(weekLabel, { align: 'center' });
+      doc.moveDown();
+      doc.font('Lora-SemiBold').fontSize(14).fillColor('#000000').text(section.trim(), {
+        align: 'left',
+        lineGap: 4
+      });
+    });
+
+    doc.moveDown(2);
+    doc.font('Lora-SemiBold').fontSize(14).fillColor('#000000').text(`Stay hydrated, consistent and well rested and results will come.\nThank you for choosing BulkBot.`, {
+      align: 'center'
+    });
+
+    doc.end();
+  } catch (err) {
+    console.error('❌ Error:', err);
+    res.status(500).send('Plan generation failed');
+  }
+};
 
 // Existing code for handleWebhook and tally webhook routes remains unchanged
 
