@@ -13,7 +13,30 @@ app.use(bodyParser.json());
 
 
 const processedSubmissions = new Set();
-const validTokens = new Map(); // token -> { used: boolean, email: string, planType: string }
+
+const fs = require('fs');
+
+// Load token data from file if it exists
+let validTokens = new Map();
+const TOKENS_FILE = './tokens.json';
+
+if (fs.existsSync(TOKENS_FILE)) {
+  try {
+    const saved = JSON.parse(fs.readFileSync(TOKENS_FILE, 'utf-8'));
+    validTokens = new Map(saved.map(([key, val]) => [key, val]));
+    console.log('🔐 Tokens loaded from file.');
+  } catch (err) {
+    console.error('❌ Failed to load tokens file:', err);
+  }
+}
+function saveTokens() {
+  try {
+    fs.writeFileSync(TOKENS_FILE, JSON.stringify([...validTokens]), 'utf-8');
+    console.log('💾 Tokens saved.');
+  } catch (err) {
+    console.error('❌ Error saving tokens:', err);
+  }
+}
 
 const buildPrompt = (userInfo, allergyNote, planType, part = 1) => {
   const weeks = planType === '4 Week' ? `Weeks ${part === 1 ? '1 and 2' : '3 and 4'}` : '1 Week';
@@ -202,6 +225,7 @@ const handleWebhook = async (req, res, planType) => {
 
     doc.on('data', buffers.push.bind(buffers));
     doc.on('end', async () => {
+      console.log("📦 PDF generation complete. Preparing to send...");
       const pdfData = Buffer.concat(buffers);
 
       const transporter = nodemailer.createTransport({
@@ -273,6 +297,7 @@ const handleWebhook = async (req, res, planType) => {
     });
 
     doc.end();
+    console.log("📤 doc.end() called.");
   } catch (err) {
     console.error('❌ Error:', err);
     res.status(500).send('Plan generation failed');
