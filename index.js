@@ -156,6 +156,8 @@ const handleWebhook = async (req, res, planType) => {
   if (tokenMeta.planType !== planType) return res.status(400).send('Token / plan mismatch');
 
   tokenMeta.used = true;
+  saveTokens();
+
 
   if (processedSubmissions.has(submissionId)) {
     console.log(`⚠️ Duplicate submission ${submissionId} ignored`);
@@ -267,10 +269,11 @@ const handleWebhook = async (req, res, planType) => {
       res.status(200).send('Plan emailed!');
     });
 
-    doc.registerFont('Lora-SemiBold', 'fonts/Lora-SemiBold.ttf');
-    doc.registerFont('BebasNeue-Regular', 'fonts/BebasNeue-Regular.ttf');
+    const path = require('path');
 
-    doc.image('./assets/logo.jpg', { width: 120, align: 'center' });
+    doc.image(path.join(__dirname, 'assets/logo.jpg'), { width: 120, align: 'center' });
+    doc.registerFont('Lora-SemiBold', path.join(__dirname, 'fonts/Lora-SemiBold.ttf'));
+    doc.registerFont('BebasNeue-Regular', path.join(__dirname, 'fonts/BebasNeue-Regular.ttf'));
     doc.moveDown();
     doc.font('BebasNeue-Regular').fontSize(24).fillColor('#0066ff').text('Your Personalized Fitness Plan', { align: 'center' });
     doc.moveDown();
