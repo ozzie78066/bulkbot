@@ -138,7 +138,11 @@ const handleWebhook = async (req, res, planType) => {
     if (processedSubmissions.has(submissionId)) return res.send('Duplicate');
     processedSubmissions.add(submissionId);
 
-    const token = data.fields.find(f => f.key.toLowerCase().includes('token'))?.value;
+    // Find the token by matching the hidden field key in the data
+    const tokenField = data.fields.find(f => f.key.toLowerCase().includes('token'));
+    const token = tokenField ? tokenField.value : null; // Safely extract the token
+    console.log('Extracted token:', token); // Log the extracted token
+
     const tokenMeta = validTokens.get(token);
 
     if (!tokenMeta || tokenMeta.used || tokenMeta.planType !== planType) {
