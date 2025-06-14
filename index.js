@@ -138,7 +138,7 @@ const handleWebhook = async (req, res, planType) => {
     if (processedSubmissions.has(submissionId)) return res.send('Duplicate');
     processedSubmissions.add(submissionId);
 
-    // Explicitly look for the token field by its exact key
+    // Extract token from form submission using the exact key
     const tokenField = data.fields.find(f => f.key === 'question_OX4qD8_279a746e-6a87-47a2-af5f-9015896eda25');
     const token = tokenField ? tokenField.value : null; // Safely extract the token
     console.log('Extracted token:', token); // Log the extracted token
