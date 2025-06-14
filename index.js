@@ -82,12 +82,25 @@ app.post('/webhook/shopify', async (req, res) => {
     const { email, line_items: lineItems = [] } = req.body;
     if (!email || !lineItems.length) return res.status(400).send('Missing order data');
 
+    // Determine plan type
     const planType = lineItems.some(item => item.title.toLowerCase().includes('4 week')) ? '4 Week' : '1 Week';
+
+    // Generate token
     const token = crypto.randomBytes(16).toString('hex');
+    console.log('Generated token:', token);  // Log token generation
+
     validTokens.set(token, { used: false, email, planType });
     saveTokens();
 
-    const tallyURL = `https://tally.so/r/wzRD1g?token=${token}`;
+    // Determine the correct Tally form URL based on the plan type
+    const tallyURL = planType === '4 Week' 
+      ? `https://tally.so/r/wzRD1g?token=${token}&plan=4week` 
+      : `https://tally.so/r/wMq9vX?token=${token}&plan=1week`;
+
+    console.log('Sending form link to:', email);  // Log email and form link
+    console.log('Tally URL:', tallyURL);  // Log the URL being sent
+
+    // Send email with the form link
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: { user: process.env.MAIL_USER, pass: process.env.MAIL_PASS }
@@ -136,22 +149,22 @@ const handleWebhook = async (req, res, planType) => {
     }).join('\n');
 
     const getPlanChunk = async (prompt) => {
-  const resp = await openai.chat.completions.create({
-    model: 'gpt-4o',
-    messages: [
-      { role: 'system', content: 'You are a fitness and nutrition expert.' },
-      { role: 'user', content: prompt }
-    ],
-    temperature: 0.4,
-    max_tokens: 10000
-  });
+      const resp = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          { role: 'system', content: 'You are a fitness and nutrition expert.' },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.4,
+        max_tokens: 10000
+      });
 
-  if (resp.choices && resp.choices[0]) {
-    return resp.choices[0].message.content;
-  }
+      if (resp.choices && resp.choices[0]) {
+        return resp.choices[0].message.content;
+      }
 
-  throw new Error('Failed to generate plan');
-};
+      throw new Error('Failed to generate plan');
+    };
 
     const prompt1 = buildPrompt(userInfo, allergies, planType, 1);
     const prompt2 = planType === '4 Week' ? buildPrompt(userInfo, allergies, planType, 2) : null;
