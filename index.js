@@ -90,6 +90,8 @@ app.post('/webhook/shopify', async (req, res) => {
     console.log('Generated token:', token);  // Log token generation
 
     validTokens.set(token, { used: false, email, planType });
+
+    // Ensure the token is saved
     saveTokens();
 
     // Determine the correct Tally form URL based on the plan type
@@ -139,7 +141,10 @@ const handleWebhook = async (req, res, planType) => {
     const token = data.fields.find(f => f.key.toLowerCase().includes('token'))?.value;
     const tokenMeta = validTokens.get(token);
 
-    if (!tokenMeta || tokenMeta.used || tokenMeta.planType !== planType) return res.status(401).send('Invalid/used token');
+    if (!tokenMeta || tokenMeta.used || tokenMeta.planType !== planType) {
+      console.error(`❌ Invalid/Used Token: ${token}`);
+      return res.status(401).send('Invalid/used token');
+    }
 
     const email = tokenMeta.email;
     const name = data.fields.find(f => f.label.toLowerCase().includes('name'))?.value || 'Client';
