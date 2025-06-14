@@ -136,17 +136,22 @@ const handleWebhook = async (req, res, planType) => {
     }).join('\n');
 
     const getPlanChunk = async (prompt) => {
-      const resp = await openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages: [
-          { role: 'system', content: 'You are a fitness and nutrition expert.' },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.4,
-        max_tokens: 10000
-      });
-      return resp.choices[0].message.content;
-    };
+  const resp = await openai.chat.completions.create({
+    model: 'gpt-4o',
+    messages: [
+      { role: 'system', content: 'You are a fitness and nutrition expert.' },
+      { role: 'user', content: prompt }
+    ],
+    temperature: 0.4,
+    max_tokens: 10000
+  });
+
+  if (resp.choices && resp.choices[0]) {
+    return resp.choices[0].message.content;
+  }
+
+  throw new Error('Failed to generate plan');
+};
 
     const prompt1 = buildPrompt(userInfo, allergies, planType, 1);
     const prompt2 = planType === '4 Week' ? buildPrompt(userInfo, allergies, planType, 2) : null;
