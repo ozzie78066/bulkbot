@@ -76,14 +76,12 @@ RULES:
 `;
 };
 
-// New function to add week headers in blue with BebasNeue-Regular font
+// Add week headers with the BebasNeue-Regular font
 const addWeekHeader = (doc, weekNumber) => {
   doc.fillColor('blue')  // Set the text color to blue
      .font('BebasNeue-Regular')  // Set the font to BebasNeue-Regular
      .fontSize(18)  // Set font size for the week header
-     .text(`Week ${weekNumber}`, {
-       align: 'center'
-     });
+     .text(`Week ${weekNumber}`, { align: 'center' });
 };
 
 app.post('/webhook/shopify', async (req, res) => {
@@ -91,27 +89,20 @@ app.post('/webhook/shopify', async (req, res) => {
     const { email, line_items: lineItems = [] } = req.body;
     if (!email || !lineItems.length) return res.status(400).send('Missing order data');
 
-    // Determine plan type
     const planType = lineItems.some(item => item.title.toLowerCase().includes('4 week')) ? '4 Week' : '1 Week';
-
-    // Generate token
     const token = crypto.randomBytes(16).toString('hex');
     console.log('Generated token:', token);  // Log token generation
 
     validTokens.set(token, { used: false, email, planType });
-
-    // Ensure the token is saved
     saveTokens();
 
-    // Determine the correct Tally form URL based on the plan type
     const tallyURL = planType === '4 Week' 
       ? `https://tally.so/r/wzRD1g?token=${token}&plan=4week` 
       : `https://tally.so/r/wMq9vX?token=${token}&plan=1week`;
 
     console.log('Sending form link to:', email);  // Log email and form link
-    console.log('Tally URL:', tallyURL);  // Log the URL being sent
+    console.log('Tally URL:', tallyURL);
 
-    // Send email with the form link
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: { user: process.env.MAIL_USER, pass: process.env.MAIL_PASS }
@@ -147,15 +138,14 @@ const handleWebhook = async (req, res, planType) => {
     if (processedSubmissions.has(submissionId)) return res.send('Duplicate');
     processedSubmissions.add(submissionId);
 
-    // Extract token from form submission using the correct field key
     let tokenField;
     if (planType === '4 Week') {
-      tokenField = data.fields.find(f => f.key === 'question_OX4qD8_279a746e-6a87-47a2-af5f-9015896eda25'); // Token field for 4-week plan
+      tokenField = data.fields.find(f => f.key === 'question_OX4qD8_279a746e-6a87-47a2-af5f-9015896eda25');
     } else if (planType === '1 Week') {
-      tokenField = data.fields.find(f => f.key === 'question_xDJv8d_25b0dded-df81-4e6b-870b-9244029e451c'); // Token field for 1-week plan
+      tokenField = data.fields.find(f => f.key === 'question_xDJv8d_25b0dded-df81-4e6b-870b-9244029e451c');
     }
-    const token = tokenField ? tokenField.value : null; // Safely extract the token
-    console.log('Extracted token:', token); // Log the extracted token
+    const token = tokenField ? tokenField.value : null;
+    console.log('Extracted token:', token);
 
     const tokenMeta = validTokens.get(token);
 
@@ -168,14 +158,22 @@ const handleWebhook = async (req, res, planType) => {
     const name = data.fields.find(f => f.label.toLowerCase().includes('name'))?.value || 'Client';
     const allergies = data.fields.find(f => f.label.toLowerCase().includes('allergies'))?.value || 'None';
 
+    const fitnessGoalOptions = {
+      '15ac77be-80c4-4020-8e06-6cc9058eb826': 'Gain muscle mass',
+      'other-goal-id': 'Lose weight',  // Add more goals here if necessary
+    };
+    const fitnessGoalField = data.fields.find(f => f.label.toLowerCase().includes('fitness goal'));
+    const fitnessGoal = fitnessGoalField ? fitnessGoalField.value : 'Not specified';
+    const goalText = fitnessGoalOptions[fitnessGoal] || 'Not specified';
+
     const userInfo = data.fields.map(f => {
       const val = Array.isArray(f.value) ? f.value.join(', ') : f.value;
       return `${f.label}: ${val}`;
     }).join('\n');
-    console.log('User Info:', userInfo);  // Log user data received from form
+    console.log('User Info:', userInfo);
 
     const getPlanChunk = async (prompt) => {
-      console.log('Sending prompt to AI:', prompt); // Log AI prompt being sent
+      console.log('Sending prompt to AI:', prompt);
       const resp = await openai.chat.completions.create({
         model: 'gpt-4o',
         messages: [
@@ -199,7 +197,7 @@ const handleWebhook = async (req, res, planType) => {
     const chunk2 = prompt2 ? await getPlanChunk(prompt2) : '';
     const fullText = `${chunk1}\n\n---\n\n${chunk2}`.trim();
 
-    console.log('AI Response:', fullText); // Log AI response for verification
+    console.log('AI Response:', fullText);
 
     const doc = new PDFKit();
     const buffers = [];
@@ -229,35 +227,29 @@ const handleWebhook = async (req, res, planType) => {
       res.send('✅ Plan sent');
     });
 
-    // Title page setup with logo and message
+    // Add title page with logo, user info, and message
     doc.addPage()
-       .fillColor('#333')  // Dark Background Color
+       .fillColor('#333')  
        .rect(0, 0, doc.page.width, doc.page.height)
        .fill();
-
-    // Title in BebasNeue-Regular (Blue)
-    doc.fillColor('blue')  // Title Text Blue
+    doc.fillColor('blue')
        .font('BebasNeue-Regular')
        .fontSize(36)
        .text('PERSONAL GYM AND MEAL PLAN', { align: 'center', y: 150 });
-
-    // Logo Centered
     doc.image(path.join(__dirname, 'assets/logo.jpg'), doc.page.width / 2 - 120, 220, { width: 240, align: 'center' });
 
-    // User Info Section (Placed Below the Title)
-    doc.fillColor('#fff')  // White text for contrast
+    doc.fillColor('#fff')
        .fontSize(14)
        .text(`Name: ${name}`, 100, 300)
        .text(`Email: ${email}`, 100, 320)
        .text(`Allergies: ${allergies}`, 100, 340);
 
-    // Message at the Bottom of the Page
     doc.fontSize(12)
        .text("Stay hydrated and consistent, and results will come!", { align: 'center', y: doc.page.height - 50 });
 
     // Add Week Headers
     doc.addPage();
-    addWeekHeader(doc, 1); // Add Week 1 header
+    addWeekHeader(doc, 1);
     doc.moveDown(2);
     doc.font('Lora-SemiBold').fontSize(14).text(fullText, { align: 'left', lineGap: 6 });
     doc.end();
