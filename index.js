@@ -148,8 +148,13 @@ const handleWebhook = async (req, res, planType) => {
     if (processedSubmissions.has(submissionId)) return res.send('Duplicate');
     processedSubmissions.add(submissionId);
 
-    // Extract token from form submission using the exact key
-    const tokenField = data.fields.find(f => f.key === 'question_OX4qD8_279a746e-6a87-47a2-af5f-9015896eda25');
+    // Check the plan type and extract the token accordingly
+    let tokenField;
+    if (planType === '4 Week') {
+      tokenField = data.fields.find(f => f.key === 'question_xDJv8d_25b0dded-df81-4e6b-870b-9244029e451c'); // Token field for 4-week plan
+    } else if (planType === '1 Week') {
+      tokenField = data.fields.find(f => f.key === 'question_xDJv8d_25b0dded-df81-4e6b-870b-9244029e451c'); // Token field for 1-week plan
+    }
     const token = tokenField ? tokenField.value : null; // Safely extract the token
     console.log('Extracted token:', token); // Log the extracted token
 
