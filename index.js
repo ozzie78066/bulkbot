@@ -77,6 +77,16 @@ RULES:
 `;
 };
 
+// New function to add week headers in blue with BebasNeue-Regular font
+const addWeekHeader = (doc, weekNumber) => {
+  doc.fillColor('blue')  // Set the text color to blue
+     .font('BebasNeue-Regular')  // Set the font to BebasNeue-Regular
+     .fontSize(18)  // Set font size for the week header
+     .text(`Week ${weekNumber}`, {
+       align: 'center'
+     });
+};
+
 app.post('/webhook/shopify', async (req, res) => {
   try {
     const { email, line_items: lineItems = [] } = req.body;
@@ -218,10 +228,12 @@ const handleWebhook = async (req, res, planType) => {
     doc.registerFont('Lora-SemiBold', path.join(__dirname, 'fonts/Lora-SemiBold.ttf'));
     doc.registerFont('BebasNeue-Regular', path.join(__dirname, 'fonts/BebasNeue-Regular.ttf'));
     doc.image(path.join(__dirname, 'assets/logo.jpg'), { width: 120, align: 'center' });
+    
+    // Add week headers in blue
     doc.moveDown();
-    doc.font('BebasNeue-Regular').fontSize(24).text('Your Personalized Fitness Plan', { align: 'center' });
-    doc.fontSize(16).text(`Client: ${name}`, { align: 'center' });
-    doc.addPage();
+    addWeekHeader(doc, 1); // Add Week 1 header
+    doc.moveDown(2);
+
     doc.font('Lora-SemiBold').fontSize(14).text(fullText, { align: 'left', lineGap: 6 });
     doc.end();
 
