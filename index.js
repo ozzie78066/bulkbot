@@ -130,6 +130,8 @@ app.post('/webhook/shopify', async (req, res) => {
 const handleWebhook = async (req, res, planType) => {
   try {
     const data = req.body.data || req.body;
+    console.log('Tally Data Received:', data); // Log received data from Tally
+
     const submissionId = data.submissionId;
     if (processedSubmissions.has(submissionId)) return res.send('Duplicate');
     processedSubmissions.add(submissionId);
@@ -147,8 +149,10 @@ const handleWebhook = async (req, res, planType) => {
       const val = Array.isArray(f.value) ? f.value.join(', ') : f.value;
       return `${f.label}: ${val}`;
     }).join('\n');
+    console.log('User Info:', userInfo);  // Log user data received from form
 
     const getPlanChunk = async (prompt) => {
+      console.log('Sending prompt to AI:', prompt); // Log AI prompt being sent
       const resp = await openai.chat.completions.create({
         model: 'gpt-4o',
         messages: [
@@ -171,6 +175,8 @@ const handleWebhook = async (req, res, planType) => {
     const chunk1 = await getPlanChunk(prompt1);
     const chunk2 = prompt2 ? await getPlanChunk(prompt2) : '';
     const fullText = `${chunk1}\n\n---\n\n${chunk2}`.trim();
+
+    console.log('AI Response:', fullText); // Log AI response for verification
 
     const doc = new PDFKit();
     const buffers = [];
