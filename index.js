@@ -230,15 +230,36 @@ const handleWebhook = async (req, res, planType) => {
       res.send('✅ Plan sent');
     });
 
-    doc.registerFont('Lora-SemiBold', path.join(__dirname, 'fonts/Lora-SemiBold.ttf'));
-    doc.registerFont('BebasNeue-Regular', path.join(__dirname, 'fonts/BebasNeue-Regular.ttf'));
-    doc.image(path.join(__dirname, 'assets/logo.jpg'), { width: 120, align: 'center' });
-    
-    // Add week headers in blue
-    doc.moveDown();
+    // Title page setup with logo and message
+    doc.addPage()
+       .fillColor('#333')  // Dark Background Color
+       .rect(0, 0, doc.page.width, doc.page.height)
+       .fill();
+
+    // Title in BebasNeue-Regular (Blue)
+    doc.fillColor('blue')  // Title Text Blue
+       .font('BebasNeue-Regular')
+       .fontSize(36)
+       .text('PERSONAL GYM AND MEAL PLAN', { align: 'center', y: 150 });
+
+    // Logo Centered
+    doc.image(path.join(__dirname, 'assets/logo.jpg'), doc.page.width / 2 - 120, 220, { width: 240, align: 'center' });
+
+    // User Info Section (Placed Below the Title)
+    doc.fillColor('#fff')  // White text for contrast
+       .fontSize(14)
+       .text(`Name: ${name}`, 100, 300)
+       .text(`Email: ${email}`, 100, 320)
+       .text(`Allergies: ${allergies}`, 100, 340);
+
+    // Message at the Bottom of the Page
+    doc.fontSize(12)
+       .text("Stay hydrated and consistent, and results will come!", { align: 'center', y: doc.page.height - 50 });
+
+    // Add Week Headers
+    doc.addPage();
     addWeekHeader(doc, 1); // Add Week 1 header
     doc.moveDown(2);
-
     doc.font('Lora-SemiBold').fontSize(14).text(fullText, { align: 'left', lineGap: 6 });
     doc.end();
 
