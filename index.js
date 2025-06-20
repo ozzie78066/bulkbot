@@ -47,8 +47,13 @@ const dropdown={
   },
   question_6KJ4xB:{
     '68fb3388-c809-4c91-8aa0-edecc63cba67':'Full gym access',
-    '67e66192-f0be-4db6-98a8-a8c3f18364bc':'Home dumbbells / bands',
-    '0a2111b9-efcd-4e52-9ef0-22f104c7d3ca':'Body-weight only'
+    '67e66192-f0be-4db6-98a8-a8c3f18364bc':'Home dumbbells',
+    '0a2111b9-efcd-4e52-9ef0-22f104c7d3ca':'Body-weight wrokouts only'
+  },
+  question_qG5pBO:{
+    '39195a16-8869-41b9-96e0-6b2159f1a14e':'home dumbells ',
+    '8f19fc4a-e16d-400b-b4dc-de4e747c58fe':'body weight workout only',
+    '3f4efea4-48cd-4c14-a377-6e743acc7158':'full gym access'
   }
 };
 
