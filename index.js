@@ -200,6 +200,8 @@ const handleWebhook = async (req, res, planType) => {
     console.log('AI Response:', fullText);
 
     const doc = new PDFKit();
+    doc.registerFont('heading', path.join(__dirname, 'fonts', 'BebasNeue-Regular.ttf'));
+    doc.registerFont('body',    path.join(__dirname, 'fonts', 'Lora-SemiBold.ttf'));
     const buffers = [];
     doc.on('data', buffers.push.bind(buffers));
     doc.on('end', async () => {
