@@ -284,4 +284,4 @@ raw.fields.forEach(f => {
 app.post('/api/tally-webhook/1week',handleWebhook('1 Week'));
 app.post('/api/tally-webhook/4week',handleWebhook('4 Week'));
 
-app.listen(3000,()=>log('🚀 BulkBot live on :3000'));
+app.listen(3000,()=>console.log('🚀 BulkBot live on :3000'));
