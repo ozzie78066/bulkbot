@@ -35,6 +35,25 @@ const saveTokens = () => {
     console.error('❌ Error saving tokens:', e);
   }
 };
+// Dropdown ID to label mappings
+const dropdownMappings = {
+  'question_7KljZA': { // Fitness Goal
+    '15ac77be-80c4-4020-8e06-6cc9058eb826': 'Gain muscle mass',
+    'aa5e8858-f6e1-4535-9ce1-8b02cc652e28': 'cut(fat Loss)',
+    'd441804a-2a44-4812-b505-41f63c80d50c': 'Recomp(build muscle lose fat)',
+    'e3a2a823-67ae-4f69-a2b0-8bca4effb500': 'Strength and power',
+    '839e27ce-c311-4a7c-adbb-88ce03488614': 'athletic perfomance',
+    '6b61091e-cecd-4a9b-ad9f-1e871bff8ebd': 'endurance/fitness',
+    '2912e3f7-6122-4a82-91e3-2d5c81f7e89f': 'toning and sculpting',
+    'bce9ebca-f750-4516-99df-44c1e9dc5a03': 'general health and fitness'
+  },
+  'question_6KJ4xB': { // Equipment Access
+    '68fb3388-c809-4c91-8aa0-edecc63cba67': 'Full Gym access',
+    '67e66192-f0be-4db6-98a8-a8c3f18364bc': 'home dumbell equipment',
+    '0a2111b9-efcd-4e52-9ef0-22f104c7d3ca': 'bodyweight workout only'
+  }
+  // Add more mappings as needed
+};
 
 const buildPrompt = (info, allergies, planType, part = 1) => {
   const weeks = planType === '4 Week' ? `Weeks ${part === 1 ? '1 and 2' : '3 and 4'}` : '1 Week';
@@ -78,10 +97,15 @@ RULES:
 
 // Add week headers with the BebasNeue-Regular font
 const addWeekHeader = (doc, weekNumber) => {
-  doc.fillColor('blue')  // Set the text color to blue
-     .font('header')  // Set the font to BebasNeue-Regular
-     .fontSize(18)  // Set font size for the week header
-     .text(`Week ${weekNumber}`, { align: 'center' });
+  const text = `Week ${weekNumber}`;
+  doc.fillColor('blue')
+     .font('header')
+     .fontSize(18)
+     .text(text, { align: 'center' });
+  const textWidth = doc.widthOfString(text);
+  const x = (doc.page.width - textWidth) / 2;
+  const y = doc.y;
+  doc.moveTo(x, y + 2).lineTo(x + textWidth, y + 2).stroke('blue');
 };
 
 app.post('/webhook/shopify', async (req, res) => {
@@ -165,7 +189,14 @@ const handleWebhook = async (req, res, planType) => {
     const fitnessGoalField = data.fields.find(f => f.label.toLowerCase().includes('fitness goal'));
     const fitnessGoal = fitnessGoalField ? fitnessGoalField.value : 'Not specified';
     const goalText = fitnessGoalOptions[fitnessGoal] || 'Not specified';
-
+    // Replace dropdown IDs with human-readable text
+    data.fields.forEach(field => {
+    const map = dropdownMappings[field.key];
+    if (map && map[field.value])
+    {
+    field.value = map[field.value];
+    }
+    });
     const userInfo = data.fields.map(f => {
       const val = Array.isArray(f.value) ? f.value.join(', ') : f.value;
       return `${f.label}: ${val}`;
@@ -195,7 +226,8 @@ const handleWebhook = async (req, res, planType) => {
     const prompt2 = planType === '4 Week' ? buildPrompt(userInfo, allergies, planType, 2) : null;
     const chunk1 = await getPlanChunk(prompt1);
     const chunk2 = prompt2 ? await getPlanChunk(prompt2) : '';
-    const fullText = `${chunk1}\n\n---\n\n${chunk2}`.trim();
+    const stripAsterisks = text => text.replace(/\*+/g, '');
+    const fullText = stripAsterisks(`${chunk1}\n\n${chunk2}`.trim());
 
     console.log('AI Response:', fullText);
 
@@ -231,9 +263,8 @@ const handleWebhook = async (req, res, planType) => {
 
     // Add title page with logo, user info, and message
     doc.addPage()
-       .fillColor('#333')  
-       .rect(0, 0, doc.page.width, doc.page.height)
-       .fill();
+       .rect(0, 0, doc.page.width, doc.page.height).fill('#333');
+    doc.fillColor('#fff');
     doc.fillColor('blue')
        .font('header')
        .fontSize(36)
@@ -246,14 +277,23 @@ const handleWebhook = async (req, res, planType) => {
        .text(`Email: ${email}`, 100, 320)
        .text(`Allergies: ${allergies}`, 100, 340);
 
-    doc.fontSize(12)
-       .text("Stay hydrated and consistent, and results will come!", { align: 'center', y: doc.page.height - 50 });
+   
 
     // Add Week Headers
-    doc.addPage();
+    doc.addPage();       
+     doc.rect(0, 0, doc.page.width, doc.page.height).fill('#333');
+     doc.fillColor('#fff');
+
     addWeekHeader(doc, 1);
     doc.moveDown(2);
     doc.font('body').fontSize(14).text(fullText, { align: 'left', lineGap: 6 });
+    doc.moveDown(4);
+doc.fillColor('#fff')
+   .fontSize(12)
+   .text("Stay hydrated and consistent, and results will come!", {
+     align: 'center',
+     y: doc.page.height - 60
+   });
     doc.end();
 
   } catch (e) {
