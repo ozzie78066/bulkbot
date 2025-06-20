@@ -79,7 +79,7 @@ RULES:
 // Add week headers with the BebasNeue-Regular font
 const addWeekHeader = (doc, weekNumber) => {
   doc.fillColor('blue')  // Set the text color to blue
-     .font('BebasNeue-Regular')  // Set the font to BebasNeue-Regular
+     .font('header')  // Set the font to BebasNeue-Regular
      .fontSize(18)  // Set font size for the week header
      .text(`Week ${weekNumber}`, { align: 'center' });
 };
@@ -200,7 +200,7 @@ const handleWebhook = async (req, res, planType) => {
     console.log('AI Response:', fullText);
 
     const doc = new PDFKit();
-    doc.registerFont('heading', path.join(__dirname, 'fonts', 'BebasNeue-Regular.ttf'));
+    doc.registerFont('header', path.join(__dirname, 'fonts', 'BebasNeue-Regular.ttf'));
     doc.registerFont('body',    path.join(__dirname, 'fonts', 'Lora-SemiBold.ttf'));
     const buffers = [];
     doc.on('data', buffers.push.bind(buffers));
@@ -235,7 +235,7 @@ const handleWebhook = async (req, res, planType) => {
        .rect(0, 0, doc.page.width, doc.page.height)
        .fill();
     doc.fillColor('blue')
-       .font('BebasNeue-Regular')
+       .font('header')
        .fontSize(36)
        .text('PERSONAL GYM AND MEAL PLAN', { align: 'center', y: 150 });
     doc.image(path.join(__dirname, 'assets/logo.jpg'), doc.page.width / 2 - 120, 220, { width: 240, align: 'center' });
@@ -253,7 +253,7 @@ const handleWebhook = async (req, res, planType) => {
     doc.addPage();
     addWeekHeader(doc, 1);
     doc.moveDown(2);
-    doc.font('Lora-SemiBold').fontSize(14).text(fullText, { align: 'left', lineGap: 6 });
+    doc.font('body').fontSize(14).text(fullText, { align: 'left', lineGap: 6 });
     doc.end();
 
   } catch (e) {
