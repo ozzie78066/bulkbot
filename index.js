@@ -32,9 +32,6 @@ const saveTokens=()=>{try{
   log('💾 tokens saved');
 }catch(e){console.error('❌ token save',e);}};
 
-raw.fields.forEach(f => {
-  log(`🧾 Field: ${f.label} (${f.key}) ->`, f.value);
-});
 /* ---------------------------------------------------------------------- */
 /* ── dropdown mappings (unchanged) ───────────────────────────────────── */
 const dropdown={
@@ -180,7 +177,12 @@ const processed=new Set();
 const handleWebhook=planType=>async(req,res)=>{
 try{
   const raw=req.body.data||req.body;
+  
   log('📥 Tally submission', raw.submissionId);
+  log('🔎 Logging all field keys and labels:');
+raw.fields.forEach(f => {
+  log(`🧾 Field: ${f.label} (${f.key}) →`, f.value);
+});
   if(processed.has(raw.submissionId)) return res.send('duplicate');
   processed.add(raw.submissionId); setTimeout(()=>processed.delete(raw.submissionId),9e5);
 
