@@ -16,7 +16,7 @@ const app   = express();
 const openai= new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 app.use(bodyP.json());
 
-const log = (...a)=>console.log('[BulkBot]',...a);
+
 
 /* ---------------------------------------------------------------------- */
 /* ── token persistence ───────────────────────────────────────────────── */
@@ -24,12 +24,12 @@ const TOKENS_FILE='./tokens.json';
 let validTokens=new Map();
 if(fs.existsSync(TOKENS_FILE)){
   try{ validTokens=new Map(JSON.parse(fs.readFileSync(TOKENS_FILE,'utf8')));
-      log('🔐 tokens loaded'); }
+      console.log('🔐 tokens loaded'); }
   catch(e){ console.error('❌ token load',e);}
 }
 const saveTokens=()=>{try{
   fs.writeFileSync(TOKENS_FILE,JSON.stringify([...validTokens]));
-  log('💾 tokens saved');
+  console.log('💾 tokens saved');
 }catch(e){console.error('❌ token save',e);}};
 
 /* ---------------------------------------------------------------------- */
@@ -102,7 +102,7 @@ const colours={ bg:'#0f172a', text:'#e2e8f0', accent:'#3b82f6' };
 const decorateNewPage=doc=>{
   doc.rect(0,0,doc.page.width,doc.page.height).fill(colours.bg);
   doc.fillColor(colours.text);
-  log('📄 new PDF page decorated');
+  console.log('📄 new PDF page decorated');
 };
 
 const startTitlePage=(doc,user)=>{
@@ -125,7 +125,7 @@ const headerUnderline=(doc,txt)=>{
   const w=doc.widthOfString(txt), x=(doc.page.width-w)/2, y=doc.y;
   doc.moveTo(x,y+2).lineTo(x+w,y+2).stroke(colours.accent);
   doc.moveDown(1);
-  log('🔠 section header:', txt);
+  console.log('🔠 section header:', txt);
 };
 
 /* ---------------------------------------------------------------------- */
@@ -165,7 +165,7 @@ try{
       </table></td></tr></table>`,
     attachments:[{filename:'logo.jpg',path:'./assets/logo.jpg',cid:'logo'}]
   });
-  log('✅ form link e-mail sent', email);
+  console.log('✅ form link e-mail sent', email);
   res.send('OK');
 }catch(e){console.error(e); res.status(500).send('Server error');}
 });
@@ -178,10 +178,10 @@ const handleWebhook=planType=>async(req,res)=>{
 try{
   const raw=req.body.data||req.body;
   
-  log('📥 Tally submission', raw.submissionId);
-  log('🔎 Logging all field keys and labels:');
+  console.log('📥 Tally submission', raw.submissionId);
+  console.log('🔎 Logging all field keys and labels:');
 raw.fields.forEach(f => {
-  log(`🧾 Field: ${f.label} (${f.key}) →`, f.value);
+  console.log(`🧾 Field: ${f.label} (${f.key}) →`, f.value);
 });
   if(processed.has(raw.submissionId)) return res.send('duplicate');
   processed.add(raw.submissionId); setTimeout(()=>processed.delete(raw.submissionId),9e5);
@@ -205,11 +205,11 @@ raw.fields.forEach(f => {
   const info=raw.fields.map(f=>{
       const v=Array.isArray(f.value)?f.value.join(', '):f.value;
       return `${f.label}: ${v}`;}).join('\n');
-  log('👤 User info:', user);
-  log('🧾 Profile summary:\n'+info);
+  console.log('👤 User info:', user);
+  console.log('🧾 Profile summary:\n'+info);
 
   const ask=async p=>{
-    log('🧠 Sending prompt to OpenAI (chars):', p.length);
+    console.log('🧠 Sending prompt to OpenAI (chars):', p.length);
     const r=await openai.chat.completions.create({
       model:'gpt-4o',temperature:0.4,max_tokens:10000,
       messages:[{role:'system',content:'You are a fitness & nutrition expert.'},
@@ -218,16 +218,16 @@ raw.fields.forEach(f => {
   };
 
   const prompt1 = buildPrompt(info, user.allergies, planType, 1);
-  log('🧠 Prompt preview:\n'+prompt1);
+  console.log('🧠 Prompt preview:\n'+prompt1);
   const text1 = await ask(prompt1);
   const prompt2 = planType==='4 Week' ? buildPrompt(info, user.allergies, planType, 2) : '';
-  if (prompt2) log('🧠 Prompt preview (Week 3/4):\n'+prompt2);
+  if (prompt2) console.log('🧠 Prompt preview (Week 3/4):\n'+prompt2);
   const text2 = prompt2 ? await ask(prompt2) : '';
   let full=text1+'\n\n'+text2;
   full=full.replace(/\*+/g,'');
   full=full.replace(/(Day\s+\d+:)/g,'\n$1');
   full=full.replace(/(Meal:)/g,'\n$1');
-  log('📝 Plan text length:', full.length);
+  console.log('📝 Plan text length:', full.length);
 
   const doc=new PDFKit({margin:50});
   doc.registerFont('header',fonts.header);
@@ -249,7 +249,7 @@ raw.fields.forEach(f => {
 
   doc.on('end',async()=>{
     const pdf=Buffer.concat(chunks);
-    log('📎 PDF size (bytes):', pdf.length);
+    console.log('📎 PDF size (bytes):', pdf.length);
     const mail=nodemailer.createTransport({
       service:'gmail',auth:{user:process.env.MAIL_USER,pass:process.env.MAIL_PASS}});
     await mail.sendMail({
@@ -274,7 +274,7 @@ raw.fields.forEach(f => {
       ]
     });
     meta.used=true; saveTokens();
-    log('📤 plan e-mailed to', user.email);
+    console.log('📤 plan e-mailed to', user.email);
     res.send('PDF sent');
   });
 
