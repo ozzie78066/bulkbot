@@ -212,8 +212,13 @@ try{
                 {role:'user',content:p}]});
     return r.choices[0].message.content;
   };
-  const text1=await ask(buildPrompt(info,user.allergies,planType,1));
-  const text2=planType==='4 Week'?await ask(buildPrompt(info,user.allergies,planType,2)):'';
+
+  const prompt1 = buildPrompt(info, user.allergies, planType, 1);
+  log('🧠 Prompt preview:\n'+prompt1);
+  const text1 = await ask(prompt1);
+  const prompt2 = planType==='4 Week' ? buildPrompt(info, user.allergies, planType, 2) : '';
+  if (prompt2) log('🧠 Prompt preview (Week 3/4):\n'+prompt2);
+  const text2 = prompt2 ? await ask(prompt2) : '';
   let full=text1+'\n\n'+text2;
   full=full.replace(/\*+/g,'');
   full=full.replace(/(Day\s+\d+:)/g,'\n$1');
