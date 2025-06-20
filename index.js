@@ -1,308 +1,246 @@
+/* --- BulkBot server (polished PDF layout) ------------------------------- */
 require('dotenv').config();
-const express = require('express');
-const bodyParser = require('body-parser');
+const express  = require('express');
+const bodyP    = require('body-parser');
 const nodemailer = require('nodemailer');
-const PDFKit = require('pdfkit');
-const crypto = require('crypto');
+const PDFKit   = require('pdfkit');
+const crypto   = require('crypto');
 const { OpenAI } = require('openai');
-const fs = require('fs');
-const path = require('path');
+const fs       = require('fs');
+const path     = require('path');
 
-const app = express();
+const app   = express();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-app.use(bodyParser.json());
 
-const processedSubmissions = new Set();
+app.use(bodyP.json());
+
+/* ----------------------------------------------------------------------- */
+/*                token bookkeeping (unchanged)                            */
 const TOKENS_FILE = './tokens.json';
-let validTokens = new Map();
-
-// Load saved tokens
+let   validTokens = new Map();
 if (fs.existsSync(TOKENS_FILE)) {
   try {
-    const saved = JSON.parse(fs.readFileSync(TOKENS_FILE, 'utf-8'));
-    validTokens = new Map(saved.map(([k, v]) => [k, v]));
-    console.log('🔐 Tokens loaded.');
-  } catch (e) {
-    console.error('❌ Error loading tokens:', e);
-  }
+    validTokens = new Map(JSON.parse(fs.readFileSync(TOKENS_FILE,'utf-8')));
+    console.log('🔐 tokens loaded');
+  } catch (e) { console.error('❌ token load', e); }
 }
-
 const saveTokens = () => {
-  try {
-    fs.writeFileSync(TOKENS_FILE, JSON.stringify([...validTokens]), 'utf-8');
-    console.log('💾 Tokens saved.');
-  } catch (e) {
-    console.error('❌ Error saving tokens:', e);
-  }
+  try { fs.writeFileSync(TOKENS_FILE, JSON.stringify([...validTokens])); }
+  catch (e) { console.error('❌ token save', e); }
 };
-// Dropdown ID to label mappings
-const dropdownMappings = {
-  'question_7KljZA': { // Fitness Goal
-    '15ac77be-80c4-4020-8e06-6cc9058eb826': 'Gain muscle mass',
-    'aa5e8858-f6e1-4535-9ce1-8b02cc652e28': 'cut(fat Loss)',
-    'd441804a-2a44-4812-b505-41f63c80d50c': 'Recomp(build muscle lose fat)',
-    'e3a2a823-67ae-4f69-a2b0-8bca4effb500': 'Strength and power',
-    '839e27ce-c311-4a7c-adbb-88ce03488614': 'athletic perfomance',
-    '6b61091e-cecd-4a9b-ad9f-1e871bff8ebd': 'endurance/fitness',
-    '2912e3f7-6122-4a82-91e3-2d5c81f7e89f': 'toning and sculpting',
-    'bce9ebca-f750-4516-99df-44c1e9dc5a03': 'general health and fitness'
+/* ----------------------------------------------------------------------- */
+/*                  dropdown mappings                                      */
+const dropdown = {
+  /* Fitness goal -------------------------------------------------------- */
+  question_7KljZA : {
+    '15ac77be-80c4-4020-8e06-6cc9058eb826' : 'Gain muscle mass',
+    'aa5e8858-f6e1-4535-9ce1-8b02cc652e28' : 'Cut (fat loss)',
+    'd441804a-2a44-4812-b505-41f63c80d50c' : 'Recomp (build muscle / lose fat)',
+    'e3a2a823-67ae-4f69-a2b0-8bca4effb500' : 'Strength & power',
+    '839e27ce-c311-4a7c-adbb-88ce03488614' : 'Athletic performance',
+    '6b61091e-cecd-4a9b-ad9f-1e871bff8ebd' : 'Endurance / fitness',
+    '2912e3f7-6122-4a82-91e3-2d5c81f7e89f' : 'Toning & sculpting',
+    'bce9ebca-f750-4516-99df-44c1e9dc5a03' : 'General health & fitness'
   },
-  'question_6KJ4xB': { // Equipment Access
-    '68fb3388-c809-4c91-8aa0-edecc63cba67': 'Full Gym access',
-    '67e66192-f0be-4db6-98a8-a8c3f18364bc': 'home dumbell equipment',
-    '0a2111b9-efcd-4e52-9ef0-22f104c7d3ca': 'bodyweight workout only'
+  /* Equipment access ---------------------------------------------------- */
+  question_6KJ4xB : {
+    '68fb3388-c809-4c91-8aa0-edecc63cba67' : 'Full gym access',
+    '67e66192-f0be-4db6-98a8-a8c3f18364bc' : 'Home dumbbells / bands',
+    '0a2111b9-efcd-4e52-9ef0-22f104c7d3ca' : 'Body-weight only'
   }
-  // Add more mappings as needed
 };
+/* ----------------------------------------------------------------------- */
+/*                    helper: build AI prompt                              */
+const buildPrompt = (info, allergies, planType, part=1) => {
+  const span = planType==='4 Week'
+    ? `Weeks ${part===1?'1 and 2':'3 and 4'}` : '1 Week';
 
-const buildPrompt = (info, allergies, planType, part = 1) => {
-  const weeks = planType === '4 Week' ? `Weeks ${part === 1 ? '1 and 2' : '3 and 4'}` : '1 Week';
-  return `You are a professional fitness and nutrition expert creating personalized PDF workout and meal plans for paying clients.
+  return `You are a professional fitness and nutrition expert creating personalised PDF workout and meal plans for paying clients.
 
-A customer has purchased the **${planType}** plan. Carefully analyze the following profile data to create a fully customized plan:
+A customer purchased the **${planType}** plan. Profile:
 
 ${info}
 
-❗️IMPORTANT:
-The user has the following allergies/intolerances:  
-**${allergies || 'None'}**  
-Exclude these allergens from all recipes. Do NOT mention or reference them — just silently avoid them in all meals.
+Allergies / intolerances: **${allergies||'None'}** (avoid silently)
 
----
-✅ Generate the plan for ${weeks}:
-${planType === '1 Week'
-      ? `- A complete 1-week workout plan (7 days: Monday to Sunday)
-- A complete 1-week meal plan (each day includes: Breakfast, Lunch, Dinner, Snack)`
-      : `- A 2-week workout plan (7 days/week, with full details: Week > Day > Exercises)
-- A 2-week meal plan (7 days/week, each with 4 meals + full macros)`}
+Generate ${span} with the following structure
+${planType==='1 Week'
+  ? `- 7-day workout plan (Mon-Sun)\n- 7-day meal plan (Breakfast, Lunch, Dinner, Snack)`
+  : `- 2-week workout plan (7 days/week, Week > Day > Exercises)\n- 2-week meal plan (7 days/week, 4 meals/day + macros)`}
 
----
-FORMAT:
+FORMAT (plain text, no bullets / tables):
+
 Day [X]:
 Workout:
-- Exercise Name – sets x reps, intensity or weight, form tips
+- Exercise – sets x reps • intensity or load • form tip
 Meal:
-- Breakfast: Name + ingredients + macros
-- Lunch: ...
-- Dinner: ...
-- Snack: ...
+- Breakfast: Name + ingredients + Calories / P/C/F
+…etc…
 
 RULES:
-- Plain text only
-- Each day must be unique
-- Include calories, protein, carbs, fats for each meal
-- Clean, expert tone for PDF
-`;
+- Every day unique
+- Show kcal, protein, carbs, fat for each meal
+- Friendly expert tone
+`;};
+/* ----------------------------------------------------------------------- */
+/*                       PDF helpers                                       */
+const fonts = {
+  header: path.join(__dirname,'fonts','BebasNeue-Regular.ttf'),
+  body  : path.join(__dirname,'fonts','Lora-SemiBold.ttf')
+};
+const colours = {
+  bg   : '#0f172a',      // slate-900 (dark blue/grey)
+  text : '#e2e8f0',      // slate-100 (light grey)
+  accent : '#3b82f6'     // blue-500
 };
 
-// Add week headers with the BebasNeue-Regular font
-const addWeekHeader = (doc, weekNumber) => {
-  const text = `Week ${weekNumber}`;
-  doc.fillColor('blue')
-     .font('header')
-     .fontSize(18)
-     .text(text, { align: 'center' });
-  const textWidth = doc.widthOfString(text);
-  const x = (doc.page.width - textWidth) / 2;
-  const y = doc.y;
-  doc.moveTo(x, y + 2).lineTo(x + textWidth, y + 2).stroke('blue');
+const startTitlePage = (doc, user) => {
+  /* Title page is the very first page – no addPage() */
+  doc.rect(0,0,doc.page.width,doc.page.height).fill(colours.bg);
+  doc.fillColor(colours.accent)
+     .font('header').fontSize(38)
+     .text('PERSONAL GYM & MEAL PLAN', {align:'center',y:140});
+  doc.image(path.join(__dirname,'assets','logo.jpg'),
+            doc.page.width/2-90, 215, {width:180});
+
+  doc.fillColor(colours.text)
+     .font('body').fontSize(14)
+     .text(`Name : ${user.name}`,  {align:'center',y:420})
+     .text(`Email: ${user.email}`, {align:'center'})
+     .text(`Allergies: ${user.allergies}`, {align:'center'});
 };
 
-app.post('/webhook/shopify', async (req, res) => {
-  try {
-    const { email, line_items: lineItems = [] } = req.body;
-    if (!email || !lineItems.length) return res.status(400).send('Missing order data');
+const openContentPage = (doc) => {
+  doc.addPage();
+  doc.rect(0,0,doc.page.width,doc.page.height).fill(colours.bg);
+  doc.fillColor(colours.text);
+};
 
-    const planType = lineItems.some(item => item.title.toLowerCase().includes('4 week')) ? '4 Week' : '1 Week';
+const underlineHeader = (doc, text) => {
+  doc.fillColor(colours.accent).font('header').fontSize(18)
+     .text(text,{align:'center'});
+  const w = doc.widthOfString(text);
+  const x = (doc.page.width-w)/2, y = doc.y;
+  doc.moveTo(x,y+2).lineTo(x+w,y+2).stroke(colours.accent);
+  doc.moveDown(1);
+};
+/* ----------------------------------------------------------------------- */
+/*                Shopify order webhook                                    */
+app.post('/webhook/shopify', async (req,res)=>{
+  try{
+    const {email, line_items=[]}=req.body;
+    if(!email||!line_items.length) return res.status(400).send('Bad order');
+    const plan = line_items.some(it=>it.title.toLowerCase().includes('4 week'))
+                ? '4 Week':'1 Week';
     const token = crypto.randomBytes(16).toString('hex');
-    console.log('Generated token:', token);  // Log token generation
+    validTokens.set(token,{used:false,email,plan}); saveTokens();
 
-    validTokens.set(token, { used: false, email, planType });
-    saveTokens();
-
-    const tallyURL = planType === '4 Week' 
-      ? `https://tally.so/r/wzRD1g?token=${token}&plan=4week` 
+    const tallyURL = plan==='4 Week'
+      ? `https://tally.so/r/wzRD1g?token=${token}&plan=4week`
       : `https://tally.so/r/wMq9vX?token=${token}&plan=1week`;
 
-    console.log('Sending form link to:', email);  // Log email and form link
-    console.log('Tally URL:', tallyURL);
-
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: { user: process.env.MAIL_USER, pass: process.env.MAIL_PASS }
+    const mail = nodemailer.createTransport({
+      service:'gmail',
+      auth:{user:process.env.MAIL_USER,pass:process.env.MAIL_PASS}
     });
-
-    await transporter.sendMail({
-      from: 'BulkBot AI <bulkbotplans@gmail.com>',
+    await mail.sendMail({
+      from:'BulkBot AI <bulkbotplans@gmail.com>',
       to: email,
-      subject: 'Your BulkBot Plan Form Link 📝',
-      html: `<div style="font-family:sans-serif;padding:20px">
-        <h2>Hey there! 🏋️‍♂️</h2>
-        <p>Thanks for buying the <b>${planType}</b> plan!</p>
-        <p>Click below to submit your info and receive your custom PDF plan:</p>
-        <a href="${tallyURL}" style="padding:10px 20px;background:#0066ff;color:#fff;border-radius:5px;text-decoration:none">Submit Form</a>
-        <p><i>This link works once only. Don't share it!</i></p>
-      </div>`
+      subject:'Your BulkBot form link',
+      html:`<p>Thanks for buying the <b>${plan}</b> plan!</p>
+            <p>Fill in your details here (link is single-use):<br>
+            <a href="${tallyURL}">${tallyURL}</a></p>`
     });
-
-    console.log(`✅ Token ${token} sent to ${email}`);
-    res.send('OK');
-  } catch (err) {
-    console.error('❌ Shopify webhook error:', err);
-    res.status(500).send('Server error');
-  }
+    console.log('✅ token sent'); return res.send('OK');
+  }catch(e){console.error(e); res.status(500).send('err');}
 });
+/* ----------------------------------------------------------------------- */
+/*                       Tally submission webhooks                         */
+const processed = new Set();
 
-const handleWebhook = async (req, res, planType) => {
-  try {
-    const data = req.body.data || req.body;
-    console.log('Tally Data Received:', data); // Log received data from Tally
+const handleWebhook = (planType)=>(async(req,res)=>{
+try{
+  const data = req.body.data || req.body;
+  if(processed.has(data.submissionId)) return res.send('dup');
+  processed.add(data.submissionId); setTimeout(()=>processed.delete(data.submissionId),9e5);
 
-    const submissionId = data.submissionId;
-    if (processedSubmissions.has(submissionId)) return res.send('Duplicate');
-    processedSubmissions.add(submissionId);
+  /* token -------------------------------------------------------------- */
+  const tokenKey = planType==='4 Week'
+        ? 'question_OX4qD8_279a746e-6a87-47a2-af5f-9015896eda25'
+        : 'question_xDJv8d_25b0dded-df81-4e6b-870b-9244029e451c';
+  const token = data.fields.find(f=>f.key===tokenKey)?.value;
+  const meta  = validTokens.get(token);
+  if(!meta||meta.used||meta.plan!==planType) return res.status(401).send('bad token');
 
-    let tokenField;
-    if (planType === '4 Week') {
-      tokenField = data.fields.find(f => f.key === 'question_OX4qD8_279a746e-6a87-47a2-af5f-9015896eda25');
-    } else if (planType === '1 Week') {
-      tokenField = data.fields.find(f => f.key === 'question_xDJv8d_25b0dded-df81-4e6b-870b-9244029e451c');
-    }
-    const token = tokenField ? tokenField.value : null;
-    console.log('Extracted token:', token);
+  /* convert dropdown ids ---------------------------------------------- */
+  data.fields.forEach(f=>{
+    const map = dropdown[f.key];
+    if(map && map[f.value]) f.value = map[f.value];
+  });
 
-    const tokenMeta = validTokens.get(token);
+  const user = {
+    name : data.fields.find(f=>f.label.toLowerCase().includes('name'))?.value||'Client',
+    email: meta.email,
+    allergies : data.fields.find(f=>f.label.toLowerCase().includes('allergies'))?.value||'None'
+  };
+  const info = data.fields.map(f=>{
+    const v = Array.isArray(f.value)?f.value.join(', '):f.value;
+    return `${f.label}: ${v}`;}).join('\n');
 
-    if (!tokenMeta || tokenMeta.used || tokenMeta.planType !== planType) {
-      console.error(`❌ Invalid/Used Token: ${token}`);
-      return res.status(401).send('Invalid/used token');
-    }
+  /* -------- Ask OpenAI ----------------------------------------------- */
+  const getChunk = async prompt=>{
+    const r = await openai.chat.completions.create({
+      model:'gpt-4o',temperature:0.4,max_tokens:10000,
+      messages:[{role:'system',content:'You are a fitness & nutrition expert.'},
+                {role:'user',content:prompt}]});
+    return r.choices[0].message.content;
+  };
+  const p1 = buildPrompt(info,user.allergies,planType,1);
+  const p2 = planType==='4 Week'?buildPrompt(info,user.allergies,planType,2):'';
+  const txt = (await getChunk(p1) + '\n\n' + (p2?await getChunk(p2):''))
+              .replace(/\*+/g,'').trim();
 
-    const email = tokenMeta.email;
-    const name = data.fields.find(f => f.label.toLowerCase().includes('name'))?.value || 'Client';
-    const allergies = data.fields.find(f => f.label.toLowerCase().includes('allergies'))?.value || 'None';
+  /* -------- Generate PDF --------------------------------------------- */
+  const doc = new PDFKit({margin:50});
+  doc.registerFont('header',fonts.header);
+  doc.registerFont('body',  fonts.body);
+  const bufs=[]; doc.on('data',d=>bufs.push(d));
+  doc.on('end',async()=>{
+     const pdf = Buffer.concat(bufs);
+     const mail = nodemailer.createTransport({
+       service:'gmail',
+       auth:{user:process.env.MAIL_USER,pass:process.env.MAIL_PASS}
+     });
+     await mail.sendMail({
+       from:'BulkBot AI <bulkbotplans@gmail.com>',
+       to: user.email,
+       subject:'Your BulkBot Plan 💪',
+       html:`<p>Hi ${user.name}, your personalised plan is attached!</p>`,
+       attachments:[{filename:'Plan.pdf',content:pdf},
+                    {filename:'logo.jpg',path:'./assets/logo.jpg',cid:'logo'}]
+     });
+     meta.used=true; saveTokens();
+     res.send('sent');
+  });
 
-    const fitnessGoalOptions = {
-      '15ac77be-80c4-4020-8e06-6cc9058eb826': 'Gain muscle mass',
-      'other-goal-id': 'Lose weight',  // Add more goals here if necessary
-    };
-    const fitnessGoalField = data.fields.find(f => f.label.toLowerCase().includes('fitness goal'));
-    const fitnessGoal = fitnessGoalField ? fitnessGoalField.value : 'Not specified';
-    const goalText = fitnessGoalOptions[fitnessGoal] || 'Not specified';
-    // Replace dropdown IDs with human-readable text
-    data.fields.forEach(field => {
-    const map = dropdownMappings[field.key];
-    if (map && map[field.value])
-    {
-    field.value = map[field.value];
-    }
-    });
-    const userInfo = data.fields.map(f => {
-      const val = Array.isArray(f.value) ? f.value.join(', ') : f.value;
-      return `${f.label}: ${val}`;
-    }).join('\n');
-    console.log('User Info:', userInfo);
+  /* first (title) page */
+  decoratePage = () => {};
+  startTitlePage(doc,user);
 
-    const getPlanChunk = async (prompt) => {
-      console.log('Sending prompt to AI:', prompt);
-      const resp = await openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages: [
-          { role: 'system', content: 'You are a fitness and nutrition expert.' },
-          { role: 'user', content: prompt }
-        ],
-        temperature: 0.4,
-        max_tokens: 10000
-      });
+  /* content pages ------------------------------------------------------ */
+  openContentPage(doc);
+  underlineHeader(doc,'Week 1');
+  doc.font('body').fontSize(14).fillColor(colours.text)
+     .text(txt,{lineGap:6});
+  doc.fillColor(colours.text).fontSize(12)
+     .text('Stay hydrated, consistent & rested – results will come.',
+           doc.page.margins.left, doc.page.height-60, {align:'center'});
+  doc.end();
 
-      if (resp.choices && resp.choices[0]) {
-        return resp.choices[0].message.content;
-      }
-
-      throw new Error('Failed to generate plan');
-    };
-
-    const prompt1 = buildPrompt(userInfo, allergies, planType, 1);
-    const prompt2 = planType === '4 Week' ? buildPrompt(userInfo, allergies, planType, 2) : null;
-    const chunk1 = await getPlanChunk(prompt1);
-    const chunk2 = prompt2 ? await getPlanChunk(prompt2) : '';
-    const stripAsterisks = text => text.replace(/\*+/g, '');
-    const fullText = stripAsterisks(`${chunk1}\n\n${chunk2}`.trim());
-
-    console.log('AI Response:', fullText);
-
-    const doc = new PDFKit();
-    doc.registerFont('header', path.join(__dirname, 'fonts', 'BebasNeue-Regular.ttf'));
-    doc.registerFont('body',    path.join(__dirname, 'fonts', 'Lora-SemiBold.ttf'));
-    const buffers = [];
-    doc.on('data', buffers.push.bind(buffers));
-    doc.on('end', async () => {
-      const pdf = Buffer.concat(buffers);
-      const transporter = nodemailer.createTransport({
-        service: 'gmail', auth: { user: process.env.MAIL_USER, pass: process.env.MAIL_PASS }
-      });
-
-      await transporter.sendMail({
-        from: 'BulkBot AI <bulkbotplans@gmail.com>',
-        to: email,
-        subject: 'Your AI-Generated BulkBot Plan 📦',
-        html: `<div style="font-family:sans-serif;padding:20px">
-          <h2>Hi ${name}, your plan is here! 🎉</h2>
-          <p>Thanks again for using BulkBot. Your PDF is attached.</p>
-        </div>`,
-        attachments: [
-          { filename: 'Plan.pdf', content: pdf },
-          { filename: 'logo.jpg', path: './assets/logo.jpg', cid: 'logo' }
-        ]
-      });
-
-      tokenMeta.used = true;
-      saveTokens();
-      res.send('✅ Plan sent');
-    });
-
-    // Add title page with logo, user info, and message
-    doc.addPage()
-       .rect(0, 0, doc.page.width, doc.page.height).fill('#333');
-    doc.fillColor('#fff');
-    doc.fillColor('blue')
-       .font('header')
-       .fontSize(36)
-       .text('PERSONAL GYM AND MEAL PLAN', { align: 'center', y: 150 });
-    doc.image(path.join(__dirname, 'assets/logo.jpg'), doc.page.width / 2 - 120, 220, { width: 240, align: 'center' });
-
-    doc.fillColor('#fff')
-       .fontSize(14)
-       .text(`Name: ${name}`, 100, 300)
-       .text(`Email: ${email}`, 100, 320)
-       .text(`Allergies: ${allergies}`, 100, 340);
-
-   
-
-    // Add Week Headers
-    doc.addPage();       
-     doc.rect(0, 0, doc.page.width, doc.page.height).fill('#333');
-     doc.fillColor('#fff');
-
-    addWeekHeader(doc, 1);
-    doc.moveDown(2);
-    doc.font('body').fontSize(14).text(fullText, { align: 'left', lineGap: 6 });
-    doc.moveDown(4);
-doc.fillColor('#fff')
-   .fontSize(12)
-   .text("Stay hydrated and consistent, and results will come!", {
-     align: 'center',
-     y: doc.page.height - 60
-   });
-    doc.end();
-
-  } catch (e) {
-    console.error('❌ Tally webhook error:', e);
-    res.status(500).send('Internal error');
-  }
-};
-
-app.post('/api/tally-webhook/1week', (req, res) => handleWebhook(req, res, '1 Week'));
-app.post('/api/tally-webhook/4week', (req, res) => handleWebhook(req, res, '4 Week'));
-
-app.listen(3000, () => console.log('🚀 Live at http://localhost:3000'));
+}catch(e){console.error(e); res.status(500).send('err');}});
+/* register tally routes ------------------------------------------------- */
+app.post('/api/tally-webhook/1week', handleWebhook('1 Week'));
+app.post('/api/tally-webhook/4week', handleWebhook('4 Week'));
+/* ----------------------------------------------------------------------- */
+app.listen(3000,()=>console.log('🚀 BulkBot listening on 3000'));
+/* ----------------------------------------------------------------------- */
