@@ -32,6 +32,9 @@ const saveTokens=()=>{try{
   log('💾 tokens saved');
 }catch(e){console.error('❌ token save',e);}};
 
+raw.fields.forEach(f => {
+  log(`🧾 Field: ${f.label} (${f.key}) ->`, f.value);
+});
 /* ---------------------------------------------------------------------- */
 /* ── dropdown mappings (unchanged) ───────────────────────────────────── */
 const dropdown={
@@ -187,7 +190,6 @@ try{
   const token=raw.fields.find(f=>f.key===tokenKey)?.value;
   const meta =validTokens.get(token);
   if(!meta||meta.used||meta.plan!==planType){return res.status(401).send('bad token');}
-  log('🔍 Field:', f.key, '| Label:', f.label, '| Value:', f.value);
   raw.fields.forEach(f=>{
     const map=dropdown[f.key];
     if(map && map[f.value]) f.value=map[f.value];
