@@ -102,6 +102,7 @@ const colours={ bg:'#0f172a', text:'#e2e8f0', accent:'#3b82f6' };
 const decorateNewPage=doc=>{
   doc.rect(0,0,doc.page.width,doc.page.height).fill(colours.bg);
   doc.fillColor(colours.text);
+  log('📄 new PDF page decorated');
 };
 
 const startTitlePage=(doc,user)=>{
@@ -124,6 +125,7 @@ const headerUnderline=(doc,txt)=>{
   const w=doc.widthOfString(txt), x=(doc.page.width-w)/2, y=doc.y;
   doc.moveTo(x,y+2).lineTo(x+w,y+2).stroke(colours.accent);
   doc.moveDown(1);
+  log('🔠 section header:', txt);
 };
 
 /* ---------------------------------------------------------------------- */
@@ -179,7 +181,6 @@ try{
   if(processed.has(raw.submissionId)) return res.send('duplicate');
   processed.add(raw.submissionId); setTimeout(()=>processed.delete(raw.submissionId),9e5);
 
-  /* token validate ---------------------------------------------------- */
   const tokenKey=planType==='4 Week'
     ?'question_OX4qD8_279a746e-6a87-47a2-af5f-9015896eda25'
     :'question_xDJv8d_25b0dded-df81-4e6b-870b-9244029e451c';
@@ -187,7 +188,6 @@ try{
   const meta =validTokens.get(token);
   if(!meta||meta.used||meta.plan!==planType){return res.status(401).send('bad token');}
 
-  /* dropdown replacements -------------------------------------------- */
   raw.fields.forEach(f=>{
     const map=dropdown[f.key];
     if(map && map[f.value]) f.value=map[f.value];
@@ -201,9 +201,11 @@ try{
   const info=raw.fields.map(f=>{
       const v=Array.isArray(f.value)?f.value.join(', '):f.value;
       return `${f.label}: ${v}`;}).join('\n');
+  log('👤 User info:', user);
+  log('🧾 Profile summary:\n'+info);
 
-  /* get AI text ------------------------------------------------------- */
   const ask=async p=>{
+    log('🧠 Sending prompt to OpenAI (chars):', p.length);
     const r=await openai.chat.completions.create({
       model:'gpt-4o',temperature:0.4,max_tokens:10000,
       messages:[{role:'system',content:'You are a fitness & nutrition expert.'},
@@ -213,38 +215,32 @@ try{
   const text1=await ask(buildPrompt(info,user.allergies,planType,1));
   const text2=planType==='4 Week'?await ask(buildPrompt(info,user.allergies,planType,2)):'';
   let full=text1+'\n\n'+text2;
-  full=full.replace(/\*+/g,'');                     // strip asterisks
-  full=full.replace(/(Day\s+\d+:)/g,'\n$1');        // blank line before each Day
-  full=full.replace(/(Meal:)/g,'\n$1');             // newline before Meal label
+  full=full.replace(/\*+/g,'');
+  full=full.replace(/(Day\s+\d+:)/g,'\n$1');
+  full=full.replace(/(Meal:)/g,'\n$1');
+  log('📝 Plan text length:', full.length);
 
-  /* ---------------- PDF creation ------------------------------------ */
   const doc=new PDFKit({margin:50});
   doc.registerFont('header',fonts.header);
   doc.registerFont('body',fonts.body);
   const chunks=[]; doc.on('data',c=>chunks.push(c));
-
-  /* every auto-added page gets styled */
   doc.on('pageAdded',()=>{ decorateNewPage(doc); });
-
-  /* title page */
   startTitlePage(doc,user);
 
-  /* content */
-  doc.addPage();             // first content page
+  doc.addPage();
   decorateNewPage(doc);
   headerUnderline(doc,'Week 1');
   doc.font('body').fontSize(14).fillColor(colours.text)
-     .text(full,{lineGap:8});          // readable gap
+     .text(full,{lineGap:8});
   doc.moveDown();
   doc.fontSize(12).fillColor(colours.text)
      .text('Stay hydrated, consistent & rested – results will come.',
            {align:'center',baseline:'bottom'});
-
   doc.end();
 
-  /* send e-mail when PDF finished ----------------------------------- */
   doc.on('end',async()=>{
     const pdf=Buffer.concat(chunks);
+    log('📎 PDF size (bytes):', pdf.length);
     const mail=nodemailer.createTransport({
       service:'gmail',auth:{user:process.env.MAIL_USER,pass:process.env.MAIL_PASS}});
     await mail.sendMail({
@@ -276,9 +272,7 @@ try{
 }catch(e){console.error('❌ Tally handler',e); res.status(500).send('err');}
 };
 
-/* webhook routes */
 app.post('/api/tally-webhook/1week',handleWebhook('1 Week'));
 app.post('/api/tally-webhook/4week',handleWebhook('4 Week'));
 
-/* listen */
 app.listen(3000,()=>log('🚀 BulkBot live on :3000'));
