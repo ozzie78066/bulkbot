@@ -204,7 +204,7 @@ raw.fields.forEach(f => {
 
   const user={
     name : raw.fields.find(f=>f.label.toLowerCase().includes('name'))?.value||'Client',
-    email: meta.email,
+    email: raw.fields.find(f=>f.label.toLowerCase().includes('email'))?.value || meta.email,
     allergies: raw.fields.find(f=>f.label.toLowerCase().includes('allergies'))?.value||'None'
   };
   const info=raw.fields.map(f=>{
