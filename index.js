@@ -107,7 +107,7 @@ const colours={ bg:'#0f172a', text:'#e2e8f0', accent:'#3b82f6' };
 const decorateNewPage=doc=>{
   doc.rect(0,0,doc.page.width,doc.page.height).fill(colours.bg);
   doc.fillColor(colours.text);
-  console.log('📄 new PDF page decorated');
+  
 };
 
 const startTitlePage=(doc,user)=>{
@@ -130,7 +130,7 @@ const headerUnderline=(doc,txt)=>{
   const w=doc.widthOfString(txt), x=(doc.page.width-w)/2, y=doc.y;
   doc.moveTo(x,y+2).lineTo(x+w,y+2).stroke(colours.accent);
   doc.moveDown(1);
-  console.log('🔠 section header:', txt);
+  
 };
 
 /* ---------------------------------------------------------------------- */
