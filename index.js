@@ -1,5 +1,5 @@
 /* === BulkBot server ==================================================== */
-/* v3 – dark-theme PDF, auto-styled pages & polished e-mails              */
+
 require('dotenv').config();
 const express   = require('express');
 const bodyP     = require('body-parser');
@@ -9,6 +9,7 @@ const crypto    = require('crypto');
 const { OpenAI }= require('openai');
 const fs        = require('fs');
 const path      = require('path');
+const fetch     = require('node-fetch');
 
 /* ---------------------------------------------------------------------- */
 /* ── basic app & helpers ──────────────────────────────────────────────── */
@@ -175,6 +176,41 @@ try{
 }catch(e){console.error(e); res.status(500).send('Server error');}
 });
 
+
+/* ── AI exercise image helpers (NEW) ─────────────────────────────────── */
+const exerciseImageCache = new Map();
+
+const isMealLine = (line) =>
+  /^(?:- )?\s*(Breakfast|Lunch|Dinner|Snack)\b/i.test(line.trim());
+
+const isExerciseLine = (line) =>
+  line.trim().startsWith('- ') && !isMealLine(line);
+
+const extractExerciseName = (line) =>
+  line.replace(/^-+\s*/, '').split(/[–—-]/)[0].trim();
+
+async function getExerciseImage(exName) {
+  if (exerciseImageCache.has(exName)) return exerciseImageCache.get(exName);
+  try {
+    const imgResp = await openai.images.generate({
+      model: "gpt-image-1",
+      prompt:
+        `Minimalist, professional instructional illustration showing correct form for: ${exName}. ` +
+        `Front/side view, clean lines, white background, no text, no branding.`,
+      size: "256x256"
+    });
+    const url = imgResp?.data?.[0]?.url;
+    if (!url) return null;
+    const resp = await fetch(url);
+    const buf = Buffer.from(await resp.arrayBuffer());
+    exerciseImageCache.set(exName, buf); // cache by exercise name
+    return buf;
+  } catch (e) {
+    console.error("❌ image gen error", e);
+    return null;
+  }
+}
+
 /* ---------------------------------------------------------------------- */
 /* ── Tally webhook handler factory ───────────────────────────────────── */
 const processed=new Set();
@@ -211,7 +247,7 @@ raw.fields.forEach(f => {
       const v=Array.isArray(f.value)?f.value.join(', '):f.value;
       return `${f.label}: ${v}`;}).join('\n');
   console.log('👤 User info:', user);
-  console.log('🧾 Profile summary:\n'+info);
+  
 
   const ask=async p=>{
     console.log('🧠 Sending prompt to OpenAI (chars):', p.length);
@@ -241,15 +277,47 @@ raw.fields.forEach(f => {
   doc.on('pageAdded',()=>{ decorateNewPage(doc); });
   startTitlePage(doc,user);
 
+    // NEW: PDF with AI exercise images (drop-in replacement)
   doc.addPage();
   decorateNewPage(doc);
-  headerUnderline(doc,'Week 1');
-  doc.font('body').fontSize(14).fillColor(colours.text)
-     .text(full,{lineGap:8});
+  headerUnderline(doc, planType === '4 Week' ? 'Weeks 1–4' : 'Week 1');
+
+  const lines = full.split('\n').filter(l => l.trim().length > 0);
+
+  // Prefetch unique exercises to reduce API calls (and use cache)
+  const uniqueExerciseNames = [...new Set(
+    lines.filter(isExerciseLine).map(extractExerciseName)
+  )];
+
+  const preloadedImages = new Map();
+  for (const name of uniqueExerciseNames) {
+    preloadedImages.set(name, await getExerciseImage(name));
+  }
+
+  // Now render line by line, inserting images before exercise lines
+  for (const line of lines) {
+    if (isExerciseLine(line)) {
+      const exName = extractExerciseName(line);
+      const imgBuf = preloadedImages.get(exName) || null;
+      if (imgBuf) {
+        try {
+          // Draw the image at the current cursor position
+          doc.image(imgBuf, { fit: [90, 90] });
+          doc.moveDown(0.2);
+        } catch (e) {
+          console.error('❌ PDF image embed error', e);
+        }
+      }
+    }
+    doc.font('body').fontSize(14).fillColor(colours.text).text(line, { lineGap: 8 });
+    doc.moveDown(0.2);
+  }
+
   doc.moveDown();
   doc.fontSize(12).fillColor(colours.text)
      .text('Stay hydrated, consistent & rested – results will come.',
            {align:'center',baseline:'bottom'});
+
   doc.end();
 
   doc.on('end',async()=>{
