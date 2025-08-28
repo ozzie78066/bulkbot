@@ -197,7 +197,7 @@ async function getExerciseImage(exName) {
       prompt:
         `Minimalist, professional instructional illustration showing correct form for: ${exName}. ` +
         `Front/side view, clean lines, white background, no text, no branding.`,
-      size: "256x256"
+      size: "1024x1024"
     });
     const url = imgResp?.data?.[0]?.url;
     if (!url) return null;
