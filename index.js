@@ -172,7 +172,7 @@ try{
     attachments:[{filename:'logo.jpg',path:'./assets/logo.jpg',cid:'logo'}]
   });
   console.log('✅ form link e-mail sent', email);
-  console.log('welcome to cumcastT');
+  
   res.send('OK');
 }catch(e){console.error(e); res.status(500).send('Server error');}
 });
@@ -306,16 +306,34 @@ raw.fields.forEach(f => {
 const uniqueExerciseNames = [...new Set(
   lines.filter(isExerciseLine).map(extractExerciseName)
 )];
-
 // Limit to 5 exercises only
+
 const limitedExercises = uniqueExerciseNames.slice(0, 5);
 
-// Create the map and preload images for only those 5
-const preloadedImages = new Map();
-for (const name of limitedExercises) {
-  preloadedImages.set(name, await getExerciseImage(name));
+// --- delay helper ---
+function delay(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// Preload images inside an async IIFE (so we can use await)
+const preloadedImages = new Map();
+await (async () => {
+  for (let i = 0; i < limitedExercises.length; i++) {
+    const name = limitedExercises[i];
+    try {
+      const img = await getExerciseImage(name);
+      preloadedImages.set(name, img);
+
+      // wait 15 seconds before next request
+      if (i < limitedExercises.length - 1) {
+        console.log(`⏳ Waiting 15s before next image...`);
+        await delay(15000);
+      }
+    } catch (err) {
+      console.error(`❌ Failed to fetch image for ${name}`, err);
+    }
+  }
+})();
   // Now render line by line, inserting images before exercise lines
   for (const line of lines) {
     if (isExerciseLine(line)) {
