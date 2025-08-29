@@ -1,7 +1,7 @@
 const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
-  host: 'smtp.zoho.com',
+  host: 'smtp.gmail.com',
   port: 465,
   secure: true,
   auth: {
@@ -11,7 +11,7 @@ const transporter = nodemailer.createTransport({
 });
 
 transporter.sendMail({
-  from: '"BulkBot AI" <oscar@bulkbot.store>',
+  from: '"BulkBot AI" <bulkbotplans@gmail.com>',
   to: 'oscar.d.harrison@gmail.com',
   subject: 'Zoho SMTP Test',
   text: '✅ This is a test email from BulkBot.',

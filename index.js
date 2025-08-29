@@ -192,24 +192,41 @@ const extractExerciseName = (line) =>
 
 async function getExerciseImage(exName) {
   if (exerciseImageCache.has(exName)) return exerciseImageCache.get(exName);
-  try {
-    const imgResp = await openai.images.generate({
-      model: "gpt-image-1",
-      prompt:
-        `Minimalist, professional instructional illustration showing correct form for: ${exName}. ` +
-        `Front/side view, clean lines, white background, no text, no branding.`,
-      size: "1024x1024"
-    });
-    const url = imgResp?.data?.[0]?.url;
-    if (!url) return null;
-    const resp = await fetch(url);
-    const buf = Buffer.from(await resp.arrayBuffer());
-    exerciseImageCache.set(exName, buf); // cache by exercise name
-    return buf;
-  } catch (e) {
-    console.error("❌ image gen error", e);
-    return null;
+
+  let attempt = 0;
+  while (attempt < 5) {
+    try {
+      const imgResp = await openai.images.generate({
+        model: "gpt-image-1",
+        prompt:
+          `Minimalist, professional instructional illustration showing correct form for: ${exName}. ` +
+          `Front/side view, clean lines, white background, no text, no branding.`,
+        size: "1024x1024"
+      });
+
+      const url = imgResp?.data?.[0]?.url;
+      if (!url) return null;
+
+      const resp = await fetch(url);
+      const buf = Buffer.from(await resp.arrayBuffer());
+      exerciseImageCache.set(exName, buf);
+      return buf;
+
+    } catch (e) {
+      if (e.status === 429) {
+        attempt++;
+        const wait = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s...
+        console.warn(`⚠️ Rate limited on "${exName}". Retrying in ${wait / 1000}s...`);
+        await new Promise(r => setTimeout(r, wait));
+      } else {
+        console.error("❌ image gen error", e);
+        return null;
+      }
+    }
   }
+
+  console.error(`❌ Failed to fetch image for "${exName}" after retries`);
+  return null;
 }
 
 /* ---------------------------------------------------------------------- */
