@@ -190,6 +190,8 @@ const isExerciseLine = (line) =>
 const extractExerciseName = (line) =>
   line.replace(/^-+\s*/, '').split(/[–—-]/)[0].trim();
 
+
+
 async function getExerciseImage(exName) {
   if (exerciseImageCache.has(exName)) return exerciseImageCache.get(exName);
 
@@ -198,28 +200,26 @@ async function getExerciseImage(exName) {
     try {
       const imgResp = await openai.images.generate({
         model: "gpt-image-1",
-        prompt:
-          `Minimalist, professional instructional illustration showing correct form for: ${exName}. ` +
-          `Front/side view, clean lines, white background, no text, no branding.`,
-        size: "1024x1024"
+        prompt: `Minimalist, professional instructional illustration showing correct form for: ${exName}. Front/side view, clean lines, white background, no text, no branding.`,
+        size: "1024x1024",
+        response_format: "b64_json"
       });
 
-      const url = imgResp?.data?.[0]?.url;
-      if (!url) return null;
-
-      const resp = await fetch(url);
-      const buf = Buffer.from(await resp.arrayBuffer());
+      const base64 = imgResp.data[0].b64_json;
+      const buf = Buffer.from(base64, 'base64');
       exerciseImageCache.set(exName, buf);
+      console.log(`✅ Image ready for "${exName}"`);
       return buf;
 
     } catch (e) {
-      if (e.status === 429) {
+      const status = e.response?.status;
+      console.error(`❌ Image error for "${exName}":`, status || e);
+      if (status === 429) { // rate limit
         attempt++;
-        const wait = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s...
-        console.warn(`⚠️ Rate limited on "${exName}". Retrying in ${wait / 1000}s...`);
+        const wait = Math.pow(2, attempt) * 1000;
+        console.warn(`⚠️ Rate limited on "${exName}". Retrying in ${wait/1000}s...`);
         await new Promise(r => setTimeout(r, wait));
       } else {
-        console.error("❌ image gen error", e);
         return null;
       }
     }
@@ -228,6 +228,42 @@ async function getExerciseImage(exName) {
   console.error(`❌ Failed to fetch image for "${exName}" after retries`);
   return null;
 }
+
+/* --- Preload exercise images before PDF rendering --- */
+async function preloadExerciseImages(lines, limit = 5) {
+  const uniqueExerciseNames = [...new Set(
+    lines.filter(isExerciseLine).map(extractExerciseName)
+  )].slice(0, limit);
+
+  const preloadedImages = new Map();
+  for (let i = 0; i < uniqueExerciseNames.length; i++) {
+    const name = uniqueExerciseNames[i];
+    const img = await getExerciseImage(name);
+    preloadedImages.set(name, img);
+    // Small delay to reduce rate-limit risk
+    if (i < uniqueExerciseNames.length - 1) await new Promise(r => setTimeout(r, 5000));
+  }
+
+  return preloadedImages;
+}
+
+/* --- Usage in your webhook --- */
+const lines = full.split('\n').filter(l => l.trim().length > 0);
+const preloadedImages = await preloadExerciseImages(lines, 5);
+
+// Render PDF line by line
+for (const line of lines) {
+  if (isExerciseLine(line)) {
+    const exName = extractExerciseName(line);
+    const imgBuf = preloadedImages.get(exName);
+    if (imgBuf) {
+      try { doc.image(imgBuf, { fit: [90, 90] }).moveDown(0.2); }
+      catch (e) { console.error('❌ PDF image embed error', e); }
+    }
+  }
+  doc.font('body').fontSize(14).fillColor(colours.text).text(line, { lineGap: 8 }).moveDown(0.2);
+}
+
 
 /* ---------------------------------------------------------------------- */
 /* ── Tally webhook handler factory ───────────────────────────────────── */
