@@ -1,5 +1,7 @@
 /* === BulkBot server ==================================================== */
 
+/* === BulkBot server ==================================================== */
+
 import dotenv from 'dotenv';
 import express from 'express';
 import bodyParser from 'body-parser';
@@ -20,7 +22,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app   = express();
 const openai= new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-app.use(bodyParser.json());
+
+// ✅ fix: parse both JSON and URL-encoded bodies
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 /* ---------------------------------------------------------------------- */
 /* ── token persistence ───────────────────────────────────────────────── */
@@ -65,7 +70,7 @@ const dropdown={
 /* ── OpenAI prompt builder ───────────────────────────────────────────── */
 const buildPrompt=(info,allergies,plan,part=1)=>{
   const span=plan==='4 Week'?`Weeks ${part===1?'1 and 2':'3 and 4'}`:'1 Week';
-return `You are a professional fitness and nutrition expert creating personalised PDF workout and meal plans for paying clients.
+  return `You are a professional fitness and nutrition expert creating personalised PDF workout and meal plans for paying clients.
 
 A customer purchased the **${plan}** plan.
 
@@ -150,6 +155,7 @@ try{
 
   const mail=nodemailer.createTransport({
       service:'gmail', auth:{user:process.env.MAIL_USER,pass:process.env.MAIL_PASS}});
+
   await mail.sendMail({
     from:'BulkBot AI <bulkbotplans@gmail.com>',
     to:email,
@@ -338,7 +344,7 @@ try{
           <tr><td style="padding:20px 0;font-size:16px;text-align:center">
             Hi ${user.name},<br>find your customised workout & meal plan attached.
           </td></tr>
-          <tr><td style="font-size:14px;text-align:center;color:#94a3b8">
+        <tr><td style="font-size:14px;text-align:center;color:#94a3b8">
             Crush your goals – we're cheering you on!
           </td></tr>
         </table></td></tr></table>`,
@@ -364,4 +370,4 @@ app.post('/webhook/tally/4week',handleWebhook('4 Week'));
 /* ---------------------------------------------------------------------- */
 /* ── Start server ───────────────────────────────────────────────────── */
 const PORT = process.env.PORT||10000;
-app.listen(PORT,()=>console.log(`🚀 BulkBot live on :${PORT}`));
+app.listen(PORT,()=>console.log(`🚀 BulkBot live on :${PORT}`)); 
