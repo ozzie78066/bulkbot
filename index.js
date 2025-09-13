@@ -104,6 +104,7 @@ PROFILE
 ${info}
 
 Allergies / intolerances: **${allergies||'None'}** (avoid silently)
+Weekly meal budget: **${budget||'No budget'}**
 
 Generate ${span} as instructed:
 
