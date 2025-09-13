@@ -349,14 +349,51 @@ startTitlePage(doc, user);
 doc.addPage();
 decorateNewPage(doc);
 headerUnderline(doc, 'Week 1');
-doc.font('body').fontSize(14).fillColor(colours.text).text(full, { lineGap: 8 });
+doc.moveDown(0.5);
+
+lines.forEach(line => {
+  // Workout / Exercise
+  if (/^\s*-\s*.+–/.test(line)) {
+    const parts = line.split('–');
+    doc.font('body').fontSize(14).fillColor('#3b82f6')
+       .text(parts[0].replace('-', '').trim() + ':', {continued: true});
+    doc.fillColor(colours.text)
+       .text(' ' + parts[1].trim(), {lineGap: 6});
+    doc.moveDown(0.5);
+  }
+  // Meal
+  else if (/^\s*-\s*(Breakfast|Lunch|Dinner|Snack)/.test(line)) {
+    const parts = line.split(':');
+    doc.font('body').fontSize(14).fillColor('#3b82f6')
+       .text(parts[0].trim() + ':', {continued: true});
+    doc.fillColor(colours.text)
+       .text(parts.slice(1).join(':').trim(), {lineGap: 6});
+    doc.moveDown(0.5);
+  }
+  // Video links
+  else if (/^Video:/.test(line)) {
+    doc.font('body').fontSize(12).fillColor('#facc15')
+       .text(line, {link: line.includes('http') ? line : undefined});
+    doc.moveDown(0.3);
+  }
+  // Any other text
+  else if (line.trim() !== '') {
+    doc.font('body').fontSize(12).fillColor(colours.text)
+       .text(line);
+    doc.moveDown(0.3);
+  }
+});
+
+
+
 doc.moveDown();
 doc.fontSize(12).fillColor(colours.text).text(
   'Stay hydrated, consistent & rested – results will come.',
-  { align: 'center', baseline: 'bottom' }
+  { align: 'center' }
 );
 
-doc.end();   
+doc.end();
+
 
 
 }catch(e){console.error('❌ Tally handler',e); res.status(500).send('err');}
