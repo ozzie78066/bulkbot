@@ -61,8 +61,8 @@ const dropdown={
 /* ── OpenAI prompt builder (unchanged) ───────────────────────────────── */
 const buildPrompt=(info,allergies,plan,part=1)=>{
   const span=plan==='4 Week'?`Weeks ${part===1?'1 and 2':'3 and 4'}`:'1 Week';
-return `You are a professional fitness and nutrition expert creating personalised PDF workout and meal plans for paying clients.
-
+return `You are a professional fitness and nutrition expert creating personalised PDF workout and meal plans for paying clients. 
+analyze the entire user info and calculate the perfect plan to get them to their goals with new interesting meals and tried and tested workouts.
 A customer purchased the **${plan}** plan.
 
 PROFILE
@@ -93,6 +93,7 @@ RULES
 • Each day unique – no “repeat previous day”
 • Show kcal + macros for **every** meal
 • Use a friendly, expert tone
+• No boring meals, mix it up and keep it interesting
 `;
 };
 
