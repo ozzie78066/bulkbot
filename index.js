@@ -94,8 +94,10 @@ RULES
 • Show kcal + macros for **every** meal
 • Use a friendly, expert tone
 • No boring meals, mix it up and keep it interesting, find new recipes.
-For each NEW exercise in the workout plan, include a YouTube link to a short instructional video. For each NEW meal in the meal plan, include a YouTube link to a cooking/preparation video
-paste the link underneath the workout so the link is clickable
+For each NEW exercise in the workout plan, include a YouTube link to a short instructional video.
+ For each NEW meal in the meal plan, include a YouTube link to a cooking/preparation video. MAKE SURE THE VIDEO IS CURRENTLY AVAILABLE
+paste the link underneath the workout so the link is clickable, space out the title and the link on 2 seperate lines.
+
 `;
 };
 
