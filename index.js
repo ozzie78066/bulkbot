@@ -10,8 +10,7 @@ const { OpenAI }= require('openai');
 const fs        = require('fs');
 const path      = require('path');
 const yts = require('yt-search');
-const fs = require('fs');
-const path = require('path');
+
 
 const libraryPath = path.join(__dirname, 'videoLibrary.json');
 let videoLibrary = require(libraryPath);
