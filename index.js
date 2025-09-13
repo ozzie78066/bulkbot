@@ -95,6 +95,7 @@ RULES
 • Use a friendly, expert tone
 • No boring meals, mix it up and keep it interesting, find new recipes.
 For each NEW exercise in the workout plan, include a YouTube link to a short instructional video. For each NEW meal in the meal plan, include a YouTube link to a cooking/preparation video
+paste the link underneath the workout so the link is clickable
 `;
 };
 
