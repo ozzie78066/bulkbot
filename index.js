@@ -235,34 +235,28 @@ raw.fields.forEach(f => {
   full=full.replace(/(Meal:)/g,'\n$1');
   console.log('📝 Plan text length:', full.length);
 
-  const doc=new PDFKit({margin:50});
-  doc.registerFont('header',fonts.header);
-  doc.registerFont('body',fonts.body);
-  const chunks=[]; doc.on('data',c=>chunks.push(c));
-  doc.on('pageAdded',()=>{ decorateNewPage(doc); });
-  startTitlePage(doc,user);
+  const doc = new PDFKit({ margin: 50 });
+doc.registerFont('header', fonts.header);
+doc.registerFont('body', fonts.body);
 
-  doc.addPage();
-  decorateNewPage(doc);
-  headerUnderline(doc,'Week 1');
-  doc.font('body').fontSize(14).fillColor(colours.text)
-     .text(full,{lineGap:8});
-  doc.moveDown();
-  doc.fontSize(12).fillColor(colours.text)
-     .text('Stay hydrated, consistent & rested – results will come.',
-           {align:'center',baseline:'bottom'});
-  doc.end();
+const chunks = [];
+doc.on('data', c => chunks.push(c));
+doc.on('pageAdded', () => { decorateNewPage(doc); });
 
-  doc.on('end',async()=>{
-    const pdf=Buffer.concat(chunks);
-    console.log('📎 PDF size (bytes):', pdf.length);
-    const mail=nodemailer.createTransport({
-      service:'gmail',auth:{user:process.env.MAIL_USER,pass:process.env.MAIL_PASS}});
-    await mail.sendMail({
-      from:'BulkBot AI <bulkbotplans@gmail.com>',
-      to:user.email,
-      subject:'Your personalised BulkBot plan 📦',
-      html:`<table width="100%" cellpadding="0" cellspacing="0" style="background:#0f172a;padding:40px 0;color:#e2e8f0;font-family:Arial,Helvetica,sans-serif">
+doc.on('end', async () => {
+  const pdf = Buffer.concat(chunks);
+  console.log('📎 PDF size (bytes):', pdf.length);
+
+  const mail = nodemailer.createTransport({
+    service: 'gmail',
+    auth: { user: process.env.MAIL_USER, pass: process.env.MAIL_PASS }
+  });
+
+  await mail.sendMail({
+    from: 'BulkBot AI <bulkbotplans@gmail.com>',
+    to: user.email,
+    subject: 'Your personalised BulkBot plan 📦',
+    html: `<table width="100%" cellpadding="0" cellspacing="0" style="background:#0f172a;padding:40px 0;color:#e2e8f0;font-family:Arial,Helvetica,sans-serif">
       <tr><td align="center">
         <table width="600" cellpadding="0" cellspacing="0" style="background:#1e293b;border-radius:12px;padding:40px">
           <tr><td align="center"><img src="cid:logo" width="120" style="margin-bottom:20px"/></td></tr>
@@ -274,15 +268,32 @@ raw.fields.forEach(f => {
             Crush your goals – we're cheering you on! 💪
           </td></tr>
         </table></td></tr></table>`,
-      attachments:[
-        {filename:'Plan.pdf',content:pdf},
-        {filename:'logo.jpg',path:'./assets/logo.jpg',cid:'logo'}
-      ]
-    });
-    meta.used=true; saveTokens();
-    console.log('📤 plan e-mailed to', user.email);
-    res.send('PDF sent');
+    attachments: [
+      { filename: 'Plan.pdf', content: pdf },
+      { filename: 'logo.jpg', path: './assets/logo.jpg', cid: 'logo' }
+    ]
   });
+
+  meta.used = true;
+  saveTokens();
+  console.log('📤 plan e-mailed to', user.email);
+  res.send('PDF sent');
+});
+
+/* build PDF content AFTER listeners are ready */
+startTitlePage(doc, user);
+doc.addPage();
+decorateNewPage(doc);
+headerUnderline(doc, 'Week 1');
+doc.font('body').fontSize(14).fillColor(colours.text).text(full, { lineGap: 8 });
+doc.moveDown();
+doc.fontSize(12).fillColor(colours.text).text(
+  'Stay hydrated, consistent & rested – results will come.',
+  { align: 'center', baseline: 'bottom' }
+);
+
+doc.end();   // only at the very end
+
 
 }catch(e){console.error('❌ Tally handler',e); res.status(500).send('err');}
 };
