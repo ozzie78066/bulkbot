@@ -9,6 +9,41 @@ const crypto    = require('crypto');
 const { OpenAI }= require('openai');
 const fs        = require('fs');
 const path      = require('path');
+const yts = require('yt-search');
+const fs = require('fs');
+const path = require('path');
+
+const libraryPath = path.join(__dirname, 'videoLibrary.json');
+let videoLibrary = require(libraryPath);
+
+// Save updated library to disk
+function saveLibrary() {
+  fs.writeFileSync(libraryPath, JSON.stringify(videoLibrary, null, 2));
+}
+
+async function fetchYouTubeLink(query, label) {
+  // 1. Check local library first
+  if (videoLibrary[label]) {
+    return videoLibrary[label];
+  }
+
+  try {
+    // 2. Search YouTube
+    const r = await yts(query);
+    const video = r.videos[0];
+    if (video) {
+      const link = video.url;
+      // 3. Cache it
+      videoLibrary[label] = link;
+      saveLibrary();
+      return link;
+    }
+    return '';
+  } catch (e) {
+    console.error('YouTube fetch error:', e);
+    return '';
+  }
+}
 
 /* ---------------------------------------------------------------------- */
 /* ── basic app & helpers ──────────────────────────────────────────────── */
@@ -94,13 +129,7 @@ RULES
 • Show kcal + macros for **every** meal
 • Use a friendly, expert tone
 • No boring meals, mix it up and keep it interesting, find new recipes.
-For each NEW exercise in the workout plan, include a YouTube link to a short instructional video from a trusted channel 
-  (Athlean-X, Jeff Nippard, Jeremy Ethier, Scott Herman Fitness, etc).
-• For each NEW meal in the meal plan, include a YouTube link to a cooking/preparation video from a trusted channel 
-  (Tasty, Pick Up Limes, BBC Good Food, etc).
-• If no reliable video is certain, dont include a link.
-• Always paste the link underneath the workout/meal so it’s clickable, with the title and the link on **separate lines**.
-• Always include at least 2 workouts for each day depending on intensity.
+
 
 `;
 };
@@ -242,6 +271,30 @@ raw.fields.forEach(f => {
   full=full.replace(/(Day\s+\d+:)/g,'\n$1');
   full=full.replace(/(Meal:)/g,'\n$1');
   console.log('📝 Plan text length:', full.length);
+  const lines = full.split('\n');
+for (let i = 0; i < lines.length; i++) {
+  // Workout line
+  if (/^\s*-\s*.+–/.test(lines[i]) && !lines[i].includes('http')) {
+    const exercise = lines[i].split('–')[0].replace('-', '').trim();
+    const link = await fetchYouTubeLink(exercise + ' exercise tutorial', exercise);
+    if (link) {
+      lines.splice(i + 1, 0, `Video: ${exercise} Technique`, link);
+    }
+  }
+
+  // Meal line
+  if (/^\s*-\s*(Breakfast|Lunch|Dinner|Snack)/.test(lines[i]) && !lines[i].includes('http')) {
+    const meal = lines[i].split(':')[1]?.split('+')[0]?.trim();
+    if (meal) {
+      const link = await fetchYouTubeLink(meal + ' recipe', meal);
+      if (link) {
+        lines.splice(i + 1, 0, `Video: ${meal} Recipe`, link);
+      }
+    }
+  }
+}
+full = lines.join('\n');
+
 
   const doc = new PDFKit({ margin: 50 });
 doc.registerFont('header', fonts.header);
@@ -288,7 +341,6 @@ doc.on('end', async () => {
   res.send('PDF sent');
 });
 
-/* build PDF content AFTER listeners are ready */
 startTitlePage(doc, user);
 doc.addPage();
 decorateNewPage(doc);
@@ -300,7 +352,7 @@ doc.fontSize(12).fillColor(colours.text).text(
   { align: 'center', baseline: 'bottom' }
 );
 
-doc.end();   // only at the very end
+doc.end();   
 
 
 }catch(e){console.error('❌ Tally handler',e); res.status(500).send('err');}
