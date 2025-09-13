@@ -93,7 +93,7 @@ const dropdown={
 
 /* ---------------------------------------------------------------------- */
 /* ── OpenAI prompt builder (unchanged) ───────────────────────────────── */
-const buildPrompt=(info,allergies,plan,part=1)=>{
+const buildPrompt=(info,allergies,plan,part=1, budget = null)=>{
   const span=plan==='4 Week'?`Weeks ${part===1?'1 and 2':'3 and 4'}`:'1 Week';
 return `You are a professional fitness and nutrition expert creating personalised PDF workout and meal plans for paying clients. 
 analyze the entire user info and calculate the perfect plan to get them to their goals with new interesting meals and tried and tested workouts.
@@ -219,6 +219,10 @@ const processed=new Set();
 const handleWebhook=planType=>async(req,res)=>{
 try{
   const raw=req.body.data||req.body;
+
+  const budget = raw.fields.find(f =>
+    f.label.toLowerCase().includes('meal budget')
+  )?.value || 'No budget';
   
   console.log('📥 Tally submission', raw.submissionId);
   console.log('🔎 Logging all field keys and labels:');
@@ -259,10 +263,10 @@ raw.fields.forEach(f => {
     return r.choices[0].message.content;
   };
 
-  const prompt1 = buildPrompt(info, user.allergies, planType, 1);
+  const prompt1 = buildPrompt(info, user.allergies, planType, 1, budget);
   console.log('🧠 Prompt preview:\n'+prompt1);
   const text1 = await ask(prompt1);
-  const prompt2 = planType==='4 Week' ? buildPrompt(info, user.allergies, planType, 2) : '';
+  const prompt2 = planType==='4 Week' ? buildPrompt(info, user.allergies, planType, 2, budget) : '';
   if (prompt2) console.log('🧠 Prompt preview (Week 3/4):\n'+prompt2);
   const text2 = prompt2 ? await ask(prompt2) : '';
   let full=text1+'\n\n'+text2;
