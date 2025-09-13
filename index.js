@@ -93,7 +93,8 @@ RULES
 • Each day unique – no “repeat previous day”
 • Show kcal + macros for **every** meal
 • Use a friendly, expert tone
-• No boring meals, mix it up and keep it interesting
+• No boring meals, mix it up and keep it interesting, find new recipes.
+For each NEW exercise in the workout plan, include a YouTube link to a short instructional video. For each NEW meal in the meal plan, include a YouTube link to a cooking/preparation video
 `;
 };
 
