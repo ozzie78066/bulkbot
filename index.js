@@ -94,9 +94,13 @@ RULES
 • Show kcal + macros for **every** meal
 • Use a friendly, expert tone
 • No boring meals, mix it up and keep it interesting, find new recipes.
-For each NEW exercise in the workout plan, include a YouTube link to a short instructional video.
- For each NEW meal in the meal plan, include a YouTube link to a cooking/preparation video. MAKE SURE THE VIDEO IS CURRENTLY AVAILABLE
-paste the link underneath the workout so the link is clickable, space out the title and the link on 2 seperate lines.
+For each NEW exercise in the workout plan, include a YouTube link to a short instructional video from a trusted channel 
+  (Athlean-X, Jeff Nippard, Jeremy Ethier, Scott Herman Fitness, etc).
+• For each NEW meal in the meal plan, include a YouTube link to a cooking/preparation video from a trusted channel 
+  (Tasty, Pick Up Limes, BBC Good Food, etc).
+• If no reliable video is certain, dont include a link.
+• Always paste the link underneath the workout/meal so it’s clickable, with the title and the link on **separate lines**.
+• Always include at least 2 workouts for each day depending on intensity.
 
 `;
 };
