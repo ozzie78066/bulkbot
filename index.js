@@ -219,14 +219,31 @@ const handleWebhook = planType => async (req, res) => {
     processed.add(raw.submissionId);
     setTimeout(() => processed.delete(raw.submissionId), 9e5);
 
-    // --- Map token keys (replace with your actual Tally keys) ---
-    const tokenKeys = {
-      '4 Week': 'question_OX4qD8_279a746e-6a87-47a2-af5f-9015896eda25',
-      '1 Week': 'question_xDJv8d_25b0dded-df81-4e6b-870b-9244029e451c',
-      'Free 1 Day Trial': 'question_ABC123_...',
-      'Workout Only': 'question_DEF456_...',
-      'Meals Only': 'question_GHI789_...'
-    };
+    const variantName = order?.line_items?.[0]?.variant_title || '';
+const productTitle = order?.line_items?.[0]?.title || '';
+console.log("Variant name:", variantName);
+console.log("Product title:", productTitle);
+
+const tokenKeys = {
+  '4 Week': 'question_OX4qD8_279a746e-6a87-47a2-af5f-9015896eda25',
+  '1 Week': 'question_xDJv8d_25b0dded-df81-4e6b-870b-9248f9a4ef70',
+  'Free Trial': 'question_XXXXXX_yourtrialtokenhere'
+};
+
+// Match variant or product text loosely to the key
+let selectedKey = null;
+for (const key in tokenKeys) {
+  if (variantName.toLowerCase().includes(key.toLowerCase()) || productTitle.toLowerCase().includes(key.toLowerCase())) {
+    selectedKey = tokenKeys[key];
+    break;
+  }
+}
+
+console.log("Selected token key:", selectedKey);
+if (!selectedKey) {
+  console.log("⚠️ No matching plan key found — skipping plan generation.");
+  return res.status(200).send('ok');
+}
     const tokenKey = tokenKeys[planType];
     if (!tokenKey) return res.status(400).send('unknown plan type');
 
@@ -256,7 +273,7 @@ const handleWebhook = planType => async (req, res) => {
     console.log('🧾 Profile summary:\n' + info);
 
     const budget = raw.fields.find(f =>
-      f.label.toLowerCase().includes('meal budget')
+      f.label.toLowerCase().includes('food budget')
     )?.value || 'No budget';
 
     // --- Helper to call OpenAI ---
