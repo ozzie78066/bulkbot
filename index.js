@@ -56,10 +56,27 @@ const saveTokens = () => {
 };
 
 /* --- Dropdown mappings --- */
-const dropdown = {
-  question_7KljZA: { /* example mapping */ },
-  question_6KJ4xB: { /* example mapping */ },
-  question_qG5pBO: { /* example mapping */ }
+const dropdown={
+  question_7KljZA:{
+    '15ac77be-80c4-4020-8e06-6cc9058eb826':'Gain muscle mass',
+    'aa5e8858-f6e1-4535-9ce1-8b02cc652e28':'Cut (fat loss)',
+    'd441804a-2a44-4812-b505-41f63c80d50c':'Recomp (build muscle / lose fat)',
+    'e3a2a823-67ae-4f69-a2b0-8bca4effb500':'Strength & power',
+    '839e27ce-c311-4a7c-adbb-88ce03488614':'Athletic performance',
+    '6b61091e-cecd-4a9b-ad9f-1e871bff8ebd':'Endurance / fitness',
+    '2912e3f7-6122-4a82-91e3-2d5c81f7e89f':'Toning & sculpting',
+    'bce9ebca-f750-4516-99df-44c1e9dc5a03':'General health & fitness'
+  },
+  question_6KJ4xB:{
+    '68fb3388-c809-4c91-8aa0-edecc63cba67':'Full gym access', 
+    '67e66192-f0be-4db6-98a8-a8c3f18364bc':'Home dumbbells',
+    '0a2111b9-efcd-4e52-9ef0-22f104c7d3ca':'Body-weight wrokouts only'
+  },
+  question_qG5pBO:{
+    '39195a16-8869-41b9-96e0-6b2159f1a14e':'home dumbells ',
+    '8f19fc4a-e16d-400b-b4dc-de4e747c58fe':'body weight workout only',
+    '3f4efea4-48cd-4c14-a377-6e743acc7158':'full gym access'
+  }
 };
 
 /* --- PDF helpers --- */
