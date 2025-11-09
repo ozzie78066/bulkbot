@@ -38,6 +38,33 @@ async function fetchYouTubeLink(query, label) {
 const app = express();
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 app.use(bodyParser.json());
+app.post('/webhook/shopify', async (req, res) => {
+  try {
+    console.log('🛒 Shopify webhook received:', JSON.stringify(req.body, null, 2));
+
+    const productTitle = req.body.line_items?.[0]?.title || '';
+    const lower = productTitle.toLowerCase();
+
+    if (lower.includes('4 week')) {
+      await handleWebhook('4 Week')(req, res);
+    } else if (lower.includes('1 week')) {
+      await handleWebhook('1 Week')(req, res);
+    } else if (lower.includes('trial')) {
+      await handleWebhook('Free 1 Day Trial')(req, res);
+    } else if (lower.includes('workout')) {
+      await handleWebhook('Workout Only')(req, res);
+    } else if (lower.includes('meal')) {
+      await handleWebhook('Meals Only')(req, res);
+    } else {
+      console.log('❌ No matching plan found for product:', productTitle);
+      res.status(200).send('No plan matched');
+    }
+  } catch (e) {
+    console.error('❌ Shopify webhook error:', e);
+    res.status(500).send('Webhook error');
+  }
+});
+
 
 /* --- Token persistence --- */
 const TOKENS_FILE = './tokens.json';
