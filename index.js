@@ -200,7 +200,7 @@ app.post('/webhook/shopify', async (req, res) => {
   if (plan === '4 Week')
     tallyURL = `https://tally.so/r/wzRD1g?token=${token}&plan=4week`;
   else if (plan === 'Free 1 Day Trial')
-    tallyURL = `https://tally.so/r/NEW_FORM_ID?token=${token}&plan=trial`;
+    tallyURL = `https://tally.so/r/GxvQgL?token=${token}&plan=trial`;
   else
     tallyURL = `https://tally.so/r/wMq9vX?token=${token}&plan=1week`;
     
