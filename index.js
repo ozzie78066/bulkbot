@@ -427,30 +427,6 @@ doc.end();
 
 app.post('/api/tally-webhook/1week',handleWebhook('1 Week'));
 app.post('/api/tally-webhook/4week',handleWebhook('4 Week'));
-app.post('/api/tally-webhook/trial', async (req, res) => {
-  try {
-    console.log('🧾 Incoming Tally Free Trial submission -------------------');
-    console.log(JSON.stringify(req.body, null, 2));
-
-    // log all question keys and answers
-    const fields = req.body.data?.fields || [];
-    if (!fields.length) {
-      console.log('⚠️ No fields found in Tally submission!');
-      return res.status(200).send('no fields');
-    }
-
-    console.log('🧩 Listing all question IDs and answers:');
-    for (const f of fields) {
-      console.log(`• ${f.label} (${f.key}) → ${f.value}`);
-    }
-
-    console.log('✅ Trial form logged successfully.');
-    res.status(200).send('logged');
-  } catch (err) {
-    console.error('❌ Error logging trial form:', err);
-    res.status(500).send('error');
-  }
-});
-
+app.post('/api/tally-webhook/freetrial', handleWebhook('Free 1 Day Trial'));
 
 app.listen(3000,()=>console.log('🚀 BulkBot live on :3000'));
