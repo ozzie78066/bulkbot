@@ -534,16 +534,28 @@ lines.forEach(line => {
   }
 
   // Video links
-  if (/^Video:/.test(line)) {
-    const linkText = line.replace('Video:', '').trim();
-    const linkURL = lines[lines.indexOf(line) + 1]?.startsWith('http')
-      ? lines[lines.indexOf(line) + 1]
-      : null;
-    doc.font('body').fontSize(11).fillColor('#facc15')
-       .text('▶ ' + linkText, { link: linkURL || undefined });
-    doc.moveDown(0.4);
-    return;
-  }
+if (/^Video:/.test(line)) {
+  const linkText = line.replace('Video:', '').trim();
+  const linkURL = lines[lines.indexOf(line) + 1]?.startsWith('http')
+    ? lines[lines.indexOf(line) + 1]
+    : null;
+
+  // Force bright yellow and underline
+  doc.save()
+     .fillColor('#1E90FF')
+     .font('body')
+     .fontSize(11)
+     .text('▶ ' + linkText, {
+       link: linkURL || undefined,
+       underline: true,
+       continued: false
+     })
+     .restore();
+
+  doc.moveDown(0.4);
+  return;
+}
+
 
   // Plain text lines (like tips, notes, macros)
   if (line.trim() !== '') {
