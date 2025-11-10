@@ -259,9 +259,12 @@ raw.fields.forEach(f => {
   if(processed.has(raw.submissionId)) return res.send('duplicate');
   processed.add(raw.submissionId); setTimeout(()=>processed.delete(raw.submissionId),9e5);
 
-  const tokenKey=planType==='4 Week'
-    ?'question_OX4qD8_279a746e-6a87-47a2-af5f-9015896eda25'
-    :'question_xDJv8d_25b0dded-df81-4e6b-870b-9244029e451c';
+  const tokenKey =
+  planType === '4 Week'
+    ? 'question_OX4qD8_279a746e-6a87-47a2-af5f-9015896eda25'
+    : planType === 'Free 1 Day Trial'
+      ? 'question_Gl79Zk_9c53b595-0463-4d46-aca4-8f14480494ba'
+      : 'question_xDJv8d_25b0dded-df81-4e6b-870b-9244029e451c';
   const token=raw.fields.find(f=>f.key===tokenKey)?.value;
   const meta =validTokens.get(token);
   if(!meta||meta.used||meta.plan!==planType){return res.status(401).send('bad token');}
