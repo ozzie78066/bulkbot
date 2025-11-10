@@ -96,10 +96,11 @@ const dropdown={
 const buildPrompt=(info,allergies,plan,part=1, budget = null)=>{
   const span=plan==='4 Week'?`Weeks ${part===1?'1 and 2':'3 and 4'}`:'1 Week';
 return `You are a professional fitness and nutrition expert creating personalised PDF workout and meal plans for paying clients. 
-analyze the entire user info and calculate the perfect plan to get them to their goals with new interesting meals and tried and tested workouts.
+Analyze the entire user profile carefully, and understand each value.
+Then research and calculate the perfect plan to get them to their goals with new interesting meals and workouts.
 A customer purchased the **${plan}** plan.
 
-PROFILE
+USER PROFILE
 -------
 ${info}
 
@@ -426,6 +427,30 @@ doc.end();
 
 app.post('/api/tally-webhook/1week',handleWebhook('1 Week'));
 app.post('/api/tally-webhook/4week',handleWebhook('4 Week'));
-app.post('/api/tally-webhook/trial', handleWebhook('Free 1 Day Trial'));
+app.post('/api/tally-webhook/trial', async (req, res) => {
+  try {
+    console.log('🧾 Incoming Tally Free Trial submission -------------------');
+    console.log(JSON.stringify(req.body, null, 2));
+
+    // log all question keys and answers
+    const fields = req.body.data?.fields || [];
+    if (!fields.length) {
+      console.log('⚠️ No fields found in Tally submission!');
+      return res.status(200).send('no fields');
+    }
+
+    console.log('🧩 Listing all question IDs and answers:');
+    for (const f of fields) {
+      console.log(`• ${f.label} (${f.key}) → ${f.value}`);
+    }
+
+    console.log('✅ Trial form logged successfully.');
+    res.status(200).send('logged');
+  } catch (err) {
+    console.error('❌ Error logging trial form:', err);
+    res.status(500).send('error');
+  }
+});
+
 
 app.listen(3000,()=>console.log('🚀 BulkBot live on :3000'));
