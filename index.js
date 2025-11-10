@@ -473,54 +473,90 @@ doc.on('end', async () => {
   res.send('PDF sent');
 });
 
+// === Generate PDF (improved layout) ===
 startTitlePage(doc, user);
 doc.addPage();
 decorateNewPage(doc);
-headerUnderline(doc, 'Week 1');
-doc.moveDown(0.5);
+headerUnderline(doc, 'Your Personal Plan');
+doc.moveDown(1);
+
+let currentDay = null;
 
 lines.forEach(line => {
-  // Workout / Exercise
+  // Detect Day headers
+  const dayMatch = line.match(/^Day\s+\d+:/i);
+  if (dayMatch) {
+    if (currentDay) doc.moveDown(1);
+    currentDay = dayMatch[0];
+    doc.rect(doc.x - 10, doc.y - 4, doc.page.width - 80, 25)
+       .fillAndStroke('#1e293b', colours.accent);
+    doc.fillColor(colours.accent).font('header').fontSize(20)
+       .text(currentDay.toUpperCase(), { align: 'center' });
+    doc.moveDown(1);
+    return;
+  }
+
+  // Section headers
+  if (/^Workout:?/i.test(line.trim())) {
+    doc.moveDown(0.5);
+    headerUnderline(doc, 'Workout');
+    doc.moveDown(0.5);
+    return;
+  }
+  if (/^Meals:?/i.test(line.trim()) || /^Meal:?/i.test(line.trim())) {
+    doc.moveDown(0.5);
+    headerUnderline(doc, 'Meals');
+    doc.moveDown(0.5);
+    return;
+  }
+
+  // Exercises
   if (/^\s*-\s*.+–/.test(line)) {
     const parts = line.split('–');
-    doc.font('body').fontSize(14).fillColor('#3b82f6')
-       .text(parts[0].replace('-', '').trim() + ':', {continued: true});
+    doc.font('body').fontSize(13).fillColor(colours.accent)
+       .text(parts[0].replace('-', '').trim() + ':', { continued: true });
     doc.fillColor(colours.text)
-       .text(' ' + parts[1].trim(), {lineGap: 6});
-    doc.moveDown(0.5);
+       .text(' ' + parts[1].trim(), { lineGap: 6 });
+    doc.moveDown(0.3);
+    return;
   }
-  // Meal
-  else if (/^\s*-\s*(Breakfast|Lunch|Dinner|Snack)/.test(line)) {
+
+  // Meals
+  if (/^\s*-\s*(Breakfast|Lunch|Dinner|Snack)/.test(line)) {
     const parts = line.split(':');
-    doc.font('body').fontSize(14).fillColor('#3b82f6')
-       .text(parts[0].trim() + ':', {continued: true});
+    doc.font('body').fontSize(13).fillColor('#10b981')
+       .text(parts[0].trim() + ':', { continued: true });
     doc.fillColor(colours.text)
-       .text(parts.slice(1).join(':').trim(), {lineGap: 6});
-    doc.moveDown(0.5);
+       .text(parts.slice(1).join(':').trim(), { lineGap: 6 });
+    doc.moveDown(0.3);
+    return;
   }
+
   // Video links
-  else if (/^Video:/.test(line)) {
-    doc.font('body').fontSize(12).fillColor('#facc15')
-       .text(line, {link: line.includes('http') ? line : undefined});
-    doc.moveDown(0.3);
+  if (/^Video:/.test(line)) {
+    const linkText = line.replace('Video:', '').trim();
+    const linkURL = lines[lines.indexOf(line) + 1]?.startsWith('http')
+      ? lines[lines.indexOf(line) + 1]
+      : null;
+    doc.font('body').fontSize(11).fillColor('#facc15')
+       .text('▶ ' + linkText, { link: linkURL || undefined });
+    doc.moveDown(0.4);
+    return;
   }
-  // Any other text
-  else if (line.trim() !== '') {
-    doc.font('body').fontSize(12).fillColor(colours.text)
-       .text(line);
-    doc.moveDown(0.3);
+
+  // Plain text lines (like tips, notes, macros)
+  if (line.trim() !== '') {
+    doc.font('body').fontSize(11).fillColor(colours.text)
+       .text(line.trim(), { lineGap: 4 });
+    doc.moveDown(0.2);
   }
 });
 
-
-
-doc.moveDown();
-doc.fontSize(12).fillColor(colours.text).text(
-  'Stay hydrated, consistent & rested – results will come.',
-  { align: 'center' }
-);
-
+doc.moveDown(1);
+doc.fontSize(12).fillColor(colours.accent)
+   .text('Stay hydrated, consistent & rested – results will come.', { align: 'center' });
 doc.end();
+
 
 
 
