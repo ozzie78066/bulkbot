@@ -88,50 +88,124 @@ const dropdown={
     '39195a16-8869-41b9-96e0-6b2159f1a14e':'home dumbells ',
     '8f19fc4a-e16d-400b-b4dc-de4e747c58fe':'body weight workout only',
     '3f4efea4-48cd-4c14-a377-6e743acc7158':'full gym access'
+  },
+  question_Gl7K2j:{
+    '14145efb-95cc-4122-ab91-678a7adaaca1':'home dumbells',
+    '46f2598d-53cf-4466-8965-5935b59a87fa':'body workout only',
+    '8bab8cc2-97db-47db-a7c5-b57050892af1':'full gym access'
   }
 };
 
 /* ---------------------------------------------------------------------- */
 /* ── OpenAI prompt builder (unchanged) ───────────────────────────────── */
-const buildPrompt=(info,allergies,plan,part=1, budget = null)=>{
-  const span=plan==='4 Week'?`Weeks ${part===1?'1 and 2':'3 and 4'}`:'1 Week';
-return `You are a professional fitness and nutrition expert creating personalised PDF workout and meal plans for paying clients. 
-Analyze the entire user profile carefully, and understand each value.
-Then research and calculate the perfect plan to get them to their goals with new interesting meals and workouts.
-A customer purchased the **${plan}** plan.
-
-USER PROFILE
+const buildPrompt = (info, allergies, plan, part = 1, budget = null) => {
+  const userInfo = `
+USER INFO
 -------
 ${info}
 
-Allergies / intolerances: **${allergies||'None'}** (avoid silently)
-Weekly meal budget: **${budget||'No budget'}**
+Allergies / intolerances: **${allergies || 'None'}** (avoid silently)
+Weekly meal budget: **${budget || 'No budget'}**
+`;
 
-Generate ${span} as instructed:
+  // -------------------- FREE TRIAL PROMPT --------------------
+  if (plan === 'Free meal Trial') {
+    return `
+You are a professional AI fitness and nutrition expert creating a weeks worth of quick, easy and most importantly healthy meals and recipes
+please analyze and base the recipes on the user info.
+research current food pricing in the users country and create your recipes according to their budgets.
+include a shopping list with rough pricing so they can be prepared for the whole weeks worth of food.
 
-${plan==='1 Week'
-  ? `• 7-day workout plan (Mon-Sun)
-• 7-day meal plan (Breakfast, Lunch, Dinner, Snack)`
-  : `• 2-week workout plan (7 days/week, Week > Day > Exercises)
-• 2-week meal plan (7 days/week, 4 meals/day + macros)`}
+${userInfo}
 
-FORMAT (plain text, no markdown symbols):
+RULES
+-----
+• Use realistic, easy-to-follow meals.
+• Include kcal + macros for all meals.
+• Tone should be energetic and encouraging.
+• increase recipe sizes based on how many people they have specified.
 
+FORMAT
 Day [X]:
-Workout:
-- Exercise – sets x reps • intensity or load • coaching tip
-Meal:
+Meals:
 - Breakfast: Name + ingredients + kcal/P/C/F
-... etc ...
+- Lunch: Name + ingredients + kcal/P/C/F
+- Dinner: Name + ingredients + kcal/P/C/F
+- Snack: Name + ingredients + kcal/P/C/F
+`;
+  }
+
+  // -------------------- 4 WEEK PLAN PROMPT --------------------
+  if (plan === '4 Week') {
+    const span = part === 1 ? 'Weeks 1 and 2' : 'Weeks 3 and 4';
+    return `
+You are a professional fitness and nutrition expert creating personalised PDF workout and meal plans for paying clients. 
+Analyze the entire user info and calculate the perfect plan to get them to their goals with new and interesting meals and workouts.
+A customer purchased the **${plan}** plan.
+
+
+${userInfo}
+
+TASK
+-----
+Generate ${span} including:
+• 2-week workout plan (7 days/week, Week > Day > Exercises)
+• 2-week meal plan (7 days/week, 4 meals/day + macros)
 
 RULES
 -----
 • Each day unique – no “repeat previous day”
 • Show kcal + macros for **every** meal
 • Use a friendly, expert tone
-• No boring meals, mix it up and keep it interesting, find new recipes.
+• No boring meals, mix it up and keep it interesting, find new recipes
+• Calculate meal costs using the user's budget and current food costs. Avoid expensive meals for low-budget users.
+
+FORMAT
+-----
+Week [X]
+ Day [X]:
+  Workout:
+  - Exercise – sets x reps • load • tip
+  Meal:
+  - Breakfast: Name + ingredients + kcal/P/C/F
+... etc ...
+`;
+  }
+
+  // -------------------- DEFAULT: 1 WEEK PLAN PROMPT --------------------
+  return `
+You are a professional fitness and nutrition expert creating personalised PDF workout and meal plans for paying clients. 
+Analyze the entire user info and calculate the perfect plan to get them to their goals with new interesting meals and tried and tested workouts.
+A customer purchased the **${plan}** plan.
 
 
+${userInfo}
+
+TASK
+-----
+Generate:
+• 7-day workout plan (Mon–Sun)
+• 7-day meal plan (Breakfast, Lunch, Dinner, Snack)
+
+RULES
+-----
+• Each day unique – no “repeat previous day”
+• Show kcal + macros for **every** meal
+• Use a friendly, expert tone
+• No boring meals, mix it up and keep it interesting, find new recipes
+• Calculate meal costs using the user's budget and current food costs. Avoid expensive meals for low-budget users.
+
+
+FORMAT
+-----
+Day [X]:
+Workout:
+- Exercise – sets x reps • intensity • tip
+Meals:
+- Breakfast: Name + ingredients + kcal/P/C/F
+- Lunch: ...
+- Dinner: ...
+- Snack: ...
 `;
 };
 
@@ -184,8 +258,8 @@ app.post('/webhook/shopify', async (req, res) => {
 
     // Identify plan from product name
     let plan;
-    if (line_items.some(i => i.title.toLowerCase().includes('free 1 day trial')))
-      plan = 'Free 1 Day Trial';
+    if (line_items.some(i => i.title.toLowerCase().includes('free meal trial')))
+      plan = 'Free meal Trial';
     else if (line_items.some(i => i.title.toLowerCase().includes('4 week')))
       plan = '4 Week';
     else
@@ -200,7 +274,7 @@ app.post('/webhook/shopify', async (req, res) => {
   let tallyURL;
   if (plan === '4 Week')
     tallyURL = `https://tally.so/r/wzRD1g?token=${token}&plan=4week`;
-  else if (plan === 'Free 1 Day Trial')
+  else if (plan === 'Free meal Trial')
     tallyURL = `https://tally.so/r/GxvQgL?token=${token}&plan=trial`;
   else
     tallyURL = `https://tally.so/r/wMq9vX?token=${token}&plan=1week`;
@@ -262,7 +336,7 @@ raw.fields.forEach(f => {
   const tokenKey =
   planType === '4 Week'
     ? 'question_OX4qD8_279a746e-6a87-47a2-af5f-9015896eda25'
-    : planType === 'Free 1 Day Trial'
+    : planType === 'Free meal Trial'
       ? 'question_Gl79Zk_9c53b595-0463-4d46-aca4-8f14480494ba'
       : 'question_xDJv8d_25b0dded-df81-4e6b-870b-9244029e451c';
   const token=raw.fields.find(f=>f.key===tokenKey)?.value;
@@ -430,6 +504,6 @@ doc.end();
 
 app.post('/api/tally-webhook/1week',handleWebhook('1 Week'));
 app.post('/api/tally-webhook/4week',handleWebhook('4 Week'));
-app.post('/api/tally-webhook/freetrial', handleWebhook('Free 1 Day Trial'));
+app.post('/api/tally-webhook/freetrial', handleWebhook('Free meal Trial'));
 
 app.listen(3000,()=>console.log('🚀 BulkBot live on :3000'));
