@@ -173,16 +173,41 @@ const headerUnderline=(doc,txt)=>{
 
 /* ---------------------------------------------------------------------- */
 /* ── Shopify webhook – send form link e-mail ─────────────────────────── */
-app.post('/webhook/shopify',async(req,res)=>{
-try{
-  const { email, line_items=[] }=req.body;
-  if(!email||!line_items.length){return res.status(400).send('Bad order');}
-  const plan=line_items.some(i=>i.title.toLowerCase().includes('4 week'))?'4 Week':'1 Week';
-  const token=crypto.randomBytes(16).toString('hex');
-  validTokens.set(token,{used:false,email,plan}); saveTokens();
-  const tallyURL=plan==='4 Week'
-      ?`https://tally.so/r/wzRD1g?token=${token}&plan=4week`
-      :`https://tally.so/r/wMq9vX?token=${token}&plan=1week`;
+app.post('/webhook/shopify', async (req, res) => {
+  try {
+    const { email, line_items = [] } = req.body;
+    if (!email || !line_items.length) {
+      console.warn('⚠️ Missing email or line_items in Shopify webhook');
+      return res.status(400).send('Bad order');
+    }
+
+    // Identify plan from product name
+    let plan;
+    if (line_items.some(i => i.title.toLowerCase().includes('free 1 day trial')))
+      plan = 'Free 1 Day Trial';
+    else if (line_items.some(i => i.title.toLowerCase().includes('4 week')))
+      plan = '4 Week';
+    else
+      plan = '1 Week';
+
+    // Generate token
+    const token = crypto.randomBytes(16).toString('hex');
+    validTokens.set(token, { used: false, email, plan });
+    saveTokens();
+
+    // Choose Tally form link
+  let tallyURL;
+  if (plan === '4 Week')
+    tallyURL = `https://tally.so/r/wzRD1g?token=${token}&plan=4week`;
+  else if (plan === 'Free 1 Day Trial')
+    tallyURL = `https://tally.so/r/NEW_FORM_ID?token=${token}&plan=trial`;
+  else
+    tallyURL = `https://tally.so/r/wMq9vX?token=${token}&plan=1week`;
+    
+   console.log(`📦 Shopify order received for: ${plan}`);
+    console.log(`📧 Email: ${email}`);
+    console.log(`🔑 Token: ${token}`);
+    console.log(`🧾 Form link: ${tallyURL}`);
 
   const mail=nodemailer.createTransport({
       service:'gmail', auth:{user:process.env.MAIL_USER,pass:process.env.MAIL_PASS}});
@@ -401,5 +426,6 @@ doc.end();
 
 app.post('/api/tally-webhook/1week',handleWebhook('1 Week'));
 app.post('/api/tally-webhook/4week',handleWebhook('4 Week'));
+app.post('/api/tally-webhook/trial', handleWebhook('Free 1 Day Trial'));
 
 app.listen(3000,()=>console.log('🚀 BulkBot live on :3000'));
