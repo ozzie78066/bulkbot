@@ -109,13 +109,13 @@ Weekly meal budget: **${budget || 'No budget'}**
 `;
 
   // -------------------- FREE TRIAL PROMPT --------------------
-  if (plan === 'Free meal Trial') {
+  if (plan === 'free meal trial') {
     return `
 You are a professional AI fitness and nutrition expert creating a weeks worth of quick, easy and most importantly healthy meals and recipes
 please analyze and base the recipes on the user info.
-research current food pricing in the users country and create your recipes according to their budgets.
+research current food pricing in the users country and create your recipes according to their budgets. DONT OVER SPEND.
 include a shopping list so they can be prepared for the whole weeks worth of food.
-
+repeat meals if budget is low.
 ${userInfo}
 
 RULES
@@ -236,11 +236,11 @@ const startTitlePage = (doc, user) => {
   let title;
   const plan = (user.plan || '').toLowerCase();
 
-  if (plan.includes('free meal trial')) {
+  if (plan.includes('free') && plan.includes('trial')) {
     title = 'FREE MEAL PLAN';
-  } else if (plan.includes('4 week')) {
+  } else if (plan.includes('4') && plan.includes('week')) {
     title = '4-WEEK TRANSFORMATION PLAN';
-  } else if (plan.includes('1 week')) {
+  } else if (plan.includes('1') && plan.includes('week')) {
     title = '1-WEEK PERSONAL PLAN';
   } else {
     title = 'PERSONAL GYM & MEAL PLAN';
@@ -284,7 +284,7 @@ app.post('/webhook/shopify', async (req, res) => {
     // Identify plan from product name
     let plan;
     if (line_items.some(i => i.title.toLowerCase().includes('free meal trial')))
-      plan = 'Free meal Trial';
+      plan = 'free meal trial';
     else if (line_items.some(i => i.title.toLowerCase().includes('4 week')))
       plan = '4 Week';
     else
@@ -299,7 +299,7 @@ app.post('/webhook/shopify', async (req, res) => {
   let tallyURL;
   if (plan === '4 Week')
     tallyURL = `https://tally.so/r/wzRD1g?token=${token}&plan=4week`;
-  else if (plan === 'Free meal Trial')
+  else if (plan === 'free meal trial')
     tallyURL = `https://tally.so/r/GxvQgL?token=${token}&plan=trial`;
   else
     tallyURL = `https://tally.so/r/wMq9vX?token=${token}&plan=1week`;
@@ -361,7 +361,7 @@ raw.fields.forEach(f => {
   const tokenKey =
   planType === '4 Week'
     ? 'question_OX4qD8_279a746e-6a87-47a2-af5f-9015896eda25'
-    : planType === 'Free meal Trial'
+    : planType === 'free meal trial'
       ? 'question_Gl79Zk_9c53b595-0463-4d46-aca4-8f14480494ba'
       : 'question_xDJv8d_25b0dded-df81-4e6b-870b-9244029e451c';
   const token=raw.fields.find(f=>f.key===tokenKey)?.value;
@@ -375,7 +375,8 @@ raw.fields.forEach(f => {
   const user={
     name : raw.fields.find(f=>f.label.toLowerCase().includes('name'))?.value||'Client',
     email: raw.fields.find(f=>f.label.toLowerCase().includes('email'))?.value || meta.email,
-    allergies: raw.fields.find(f=>f.label.toLowerCase().includes('allergies'))?.value||'None'
+    allergies: raw.fields.find(f=>f.label.toLowerCase().includes('allergies'))?.value||'None',
+    plan: planType
   };
   const info=raw.fields.map(f=>{
       const v=Array.isArray(f.value)?f.value.join(', '):f.value;
@@ -565,6 +566,6 @@ doc.end();
 
 app.post('/api/tally-webhook/1week',handleWebhook('1 Week'));
 app.post('/api/tally-webhook/4week',handleWebhook('4 Week'));
-app.post('/api/tally-webhook/freetrial', handleWebhook('Free meal Trial'));
+app.post('/api/tally-webhook/freetrial', handleWebhook('free meal trial'));
 
 app.listen(3000,()=>console.log('🚀 BulkBot live on :3000'));
