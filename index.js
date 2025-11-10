@@ -114,12 +114,14 @@ Weekly meal budget: **${budget || 'No budget'}**
 You are a professional AI fitness and nutrition expert creating a weeks worth of quick, easy and most importantly healthy meals and recipes
 please analyze and base the recipes on the user info.
 research current food pricing in the users country and create your recipes according to their budgets.
-include a shopping list with rough pricing so they can be prepared for the whole weeks worth of food.
+include a shopping list so they can be prepared for the whole weeks worth of food.
 
 ${userInfo}
 
 RULES
 -----
+• words only no filler symbols (*,@,#. ect.)
+• Just return plan.
 • Use realistic, easy-to-follow meals.
 • Include kcal + macros for all meals.
 • Tone should be energetic and encouraging.
@@ -154,6 +156,8 @@ Generate ${span} including:
 
 RULES
 -----
+• words only no filler symbols (*,@,#. ect.)
+• Just return plan.
 • Each day unique – no “repeat previous day”
 • Show kcal + macros for **every** meal
 • Use a friendly, expert tone
@@ -189,6 +193,8 @@ Generate:
 
 RULES
 -----
+• words only no filler symbols (*,@,#. ect.)
+• Just return plan.
 • Each day unique – no “repeat previous day”
 • Show kcal + macros for **every** meal
 • Use a friendly, expert tone
@@ -223,18 +229,37 @@ const decorateNewPage=doc=>{
   
 };
 
-const startTitlePage=(doc,user)=>{
+const startTitlePage = (doc, user) => {
   decorateNewPage(doc);
+
+  // choose title based on plan type
+  let title;
+  const plan = (user.plan || '').toLowerCase();
+
+  if (plan.includes('free meal trial')) {
+    title = 'FREE MEAL PLAN';
+  } else if (plan.includes('4 week')) {
+    title = '4-WEEK TRANSFORMATION PLAN';
+  } else if (plan.includes('1 week')) {
+    title = '1-WEEK PERSONAL PLAN';
+  } else {
+    title = 'PERSONAL GYM & MEAL PLAN';
+  }
+
   doc.fillColor(colours.accent)
-     .font('header').fontSize(38)
-     .text('PERSONAL GYM & MEAL PLAN',{align:'center',y:140});
-  doc.image(path.join(__dirname,'assets','logo.jpg'),
-            doc.page.width/2-90, 215,{width:180});
+     .font('header')
+     .fontSize(38)
+     .text(title, { align: 'center', y: 140 });
+
+  doc.image(path.join(__dirname, 'assets', 'logo.jpg'),
+            doc.page.width / 2 - 90, 215, { width: 180 });
+
   doc.fillColor(colours.text)
-     .font('body').fontSize(14)
-     .text(`Name : ${user.name}`,  {align:'center',y:420})
-     .text(`Email: ${user.email}`, {align:'center'})
-     .text(`Allergies: ${user.allergies}`, {align:'center'});
+     .font('body')
+     .fontSize(14)
+     .text(`Name : ${user.name}`, { align: 'center', y: 420 })
+     .text(`Email: ${user.email}`, { align: 'center' })
+     .text(`Allergies: ${user.allergies || 'None'}`, { align: 'center' });
 };
 
 const headerUnderline=(doc,txt)=>{
