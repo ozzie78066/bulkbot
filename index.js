@@ -1,4 +1,4 @@
-/* === BulkBot server ==================================================== */
+/* === TRAIN server ==================================================== */
 /* v3 – dark-theme PDF, auto-styled pages & polished e-mails              */
 require('dotenv').config();
 const express   = require('express');
@@ -319,14 +319,14 @@ app.post('/webhook/shopify', async (req, res) => {
   const mail=nodemailer.createTransport({
       service:'gmail', auth:{user:process.env.MAIL_USER,pass:process.env.MAIL_PASS}});
   await mail.sendMail({
-    from:'BulkBot AI <bulkbotplans@gmail.com>',
+    from:'TRAIN AI <trainyourwayfit@gmail.com>',
     to:email,
     subject:`Let's build your ${plan} plan – form link inside`,
     html:`<table width="100%" cellpadding="0" cellspacing="0" style="background:#0f172a;padding:40px 0;color:#e2e8f0;font-family:Arial,Helvetica,sans-serif">
     <tr><td align="center">
       <table width="600" cellpadding="0" cellspacing="0" style="background:#1e293b;border-radius:12px;padding:40px">
         <tr><td align="center"><img src="cid:logo" width="120" style="margin-bottom:20px"/></td></tr>
-        <tr><td style="font-size:22px;font-weight:bold;color:#3b82f6;text-align:center">Welcome to BulkBot AI</td></tr>
+        <tr><td style="font-size:22px;font-weight:bold;color:#3b82f6;text-align:center">Welcome to TRAIN AI</td></tr>
         <tr><td style="padding:20px 0;font-size:16px;text-align:center">
           Thanks for purchasing the <b>${plan}</b> plan.<br>
           Tap the button below to tell us about your goals and preferences.
@@ -454,9 +454,9 @@ doc.on('end', async () => {
   });
 
   await mail.sendMail({
-    from: 'BulkBot AI <bulkbotplans@gmail.com>',
+    from: 'TRAIN AI <trainyourwayfit@gmail.com>',
     to: user.email,
-    subject: 'Your personalised BulkBot plan 📦',
+    subject: 'Your personalised TRAIN plan 📦',
     html: `<table width="100%" cellpadding="0" cellspacing="0" style="background:#0f172a;padding:40px 0;color:#e2e8f0;font-family:Arial,Helvetica,sans-serif">
       <tr><td align="center">
         <table width="600" cellpadding="0" cellspacing="0" style="background:#1e293b;border-radius:12px;padding:40px">
@@ -587,4 +587,4 @@ app.post('/api/tally-webhook/1week',handleWebhook('1 Week'));
 app.post('/api/tally-webhook/4week',handleWebhook('4 Week'));
 app.post('/api/tally-webhook/freetrial', handleWebhook('free meal trial'));
 
-app.listen(3000,()=>console.log('🚀 BulkBot live on :3000'));
+app.listen(3000,()=>console.log('🚀 TRAIN live on :3000'));
