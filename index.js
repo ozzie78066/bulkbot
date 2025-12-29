@@ -319,7 +319,7 @@ app.post('/webhook/shopify', async (req, res) => {
   const mail=nodemailer.createTransport({
       service:'gmail', auth:{user:process.env.MAIL_USER,pass:process.env.MAIL_PASS}});
   await mail.sendMail({
-    from:'TRAIN AI <trainyourwayfit@gmail.com>',
+    from:'TRAIN AI <plans@trainyourway.fit>',
     to:email,
     subject:`Let's build your ${plan} plan – form link inside`,
     html:`<table width="100%" cellpadding="0" cellspacing="0" style="background:#0f172a;padding:40px 0;color:#e2e8f0;font-family:Arial,Helvetica,sans-serif">
@@ -448,10 +448,15 @@ doc.on('end', async () => {
   const pdf = Buffer.concat(chunks);
   console.log('📎 PDF size (bytes):', pdf.length);
 
-  const mail = nodemailer.createTransport({
-    service: 'gmail',
-    auth: { user: process.env.MAIL_USER, pass: process.env.MAIL_PASS }
-  });
+ const mail = nodemailer.createTransport({
+  host: 'mail.privateemail.com',
+  port: 587,
+  secure: false,
+  auth: {
+    user: process.env.MAIL_USER,
+    pass: process.env.MAIL_PASS
+  }
+});
 
   await mail.sendMail({
     from: 'TRAIN AI <trainyourwayfit@gmail.com>',
