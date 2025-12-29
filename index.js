@@ -12,6 +12,20 @@ const path      = require('path');
 const yts = require('yt-search');
 
 
+const mail = nodemailer.createTransport({
+  host: 'mail.privateemail.com',
+  port: 587,
+  secure: false,
+  auth: {
+    user: process.env.MAIL_USER,
+    pass: process.env.MAIL_PASS
+  }
+});
+mail.verify((err) => {
+  if (err) console.error('❌ SMTP FAIL', err);
+  else console.log('✅ SMTP READY (Namecheap)');
+});
+
 const libraryPath = path.join(__dirname, 'videoLibrary.json');
 let videoLibrary = require(libraryPath);
 
@@ -316,8 +330,7 @@ app.post('/webhook/shopify', async (req, res) => {
     console.log(`🔑 Token: ${token}`);
     console.log(`🧾 Form link: ${tallyURL}`);
 
-  const mail=nodemailer.createTransport({
-      service:'gmail', auth:{user:process.env.MAIL_USER,pass:process.env.MAIL_PASS}});
+  
   await mail.sendMail({
     from:'TRAIN AI <plans@trainyourway.fit>',
     to:email,
@@ -448,18 +461,9 @@ doc.on('end', async () => {
   const pdf = Buffer.concat(chunks);
   console.log('📎 PDF size (bytes):', pdf.length);
 
- const mail = nodemailer.createTransport({
-  host: 'mail.privateemail.com',
-  port: 587,
-  secure: false,
-  auth: {
-    user: process.env.MAIL_USER,
-    pass: process.env.MAIL_PASS
-  }
-});
 
   await mail.sendMail({
-    from: 'TRAIN AI <trainyourwayfit@gmail.com>',
+    from: 'TRAIN AI <plans@trainyourway.fit>',
     to: user.email,
     subject: 'Your personalised TRAIN plan 📦',
     html: `<table width="100%" cellpadding="0" cellspacing="0" style="background:#0f172a;padding:40px 0;color:#e2e8f0;font-family:Arial,Helvetica,sans-serif">
