@@ -214,6 +214,7 @@ Generate:
 
 RULES
 -----
+• QUIETLY AVOID ALLERGIES
 • words only no filler symbols (*,@,#. ect.)
 • Just return plan.
 • Each day unique – no “repeat previous day”
