@@ -364,6 +364,7 @@ app.post('/webhook/shopify', async (req, res) => {
 const processed=new Set();
 
 const handleWebhook=planType=>async(req,res)=>{
+ console.log("RAW BODY:", JSON.stringify(req.body, null, 2));
 try{
   const raw=req.body.data||req.body;
 
@@ -603,9 +604,6 @@ doc.end();
 
 
 
-}catch(e){console.error('❌ Tally handler',e); res.status(500).send('err');}
-};
-console.log("RAW BODY:", JSON.stringify(req.body, null, 2));
 
 app.post('/api/tally-webhook/1week',handleWebhook('1 Week'));
 app.post('/api/tally-webhook/4week',handleWebhook('4 Week'));
