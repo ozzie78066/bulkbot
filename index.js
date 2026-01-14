@@ -364,7 +364,6 @@ app.post('/webhook/shopify', async (req, res) => {
 const processed=new Set();
 
 const handleWebhook=planType=>async(req,res)=>{
- console.log("RAW BODY:", JSON.stringify(req.body, null, 2));
 try{
   const raw=req.body.data||req.body;
 
@@ -380,33 +379,20 @@ raw.fields.forEach(f => {
   if(processed.has(raw.submissionId)) return res.send('duplicate');
   processed.add(raw.submissionId); setTimeout(()=>processed.delete(raw.submissionId),9e5);
 
-/*const tokenKey =
+  const tokenKey =
   planType === '4 Week'
     ? 'question_OX4qD8_279a746e-6a87-47a2-af5f-9015896eda25'
     : planType === 'free meal trial'
       ? 'question_Gl79Zk_9c53b595-0463-4d46-aca4-8f14480494ba'
-      : planType === '1 Week'
-        ? 'question_xDJv8d_25b0dded-df81-4e6b-870b-9244029e451c'
-        : null;
-*/
-// --- TEMP: auto-detect token ---
-let tokenField = raw.fields.find(f => f.label.toLowerCase().includes('token'));
-if (!tokenField) {
-  console.warn('⚠️ No field labeled "token" found, dumping all fields:');
-  raw.fields.forEach(f => console.log(`🔑 ${f.label} (${f.key}):`, f.value));
-}
-const token = tokenField?.value;
-console.log('🗝 Detected token:', token);
-
-
- /* const token=raw.fields.find(f=>f.key===tokenKey)?.value;
+      : 'question_xDJv8d_25b0dded-df81-4e6b-870b-9244029e451c';
+  const token=raw.fields.find(f=>f.key===tokenKey)?.value;
   const meta =validTokens.get(token);
   if(!meta||meta.used||meta.plan!==planType){return res.status(401).send('bad token');}
   raw.fields.forEach(f=>{
     const map=dropdown[f.key];
     if(map && map[f.value]) f.value=map[f.value];
   });
-*/
+
   const user={
     name : raw.fields.find(f=>f.label.toLowerCase().includes('name'))?.value||'Client',
     email: raw.fields.find(f=>f.label.toLowerCase().includes('email'))?.value || meta.email,
@@ -604,6 +590,8 @@ doc.end();
 
 
 
+}catch(e){console.error('❌ Tally handler',e); res.status(500).send('err');}
+};
 
 app.post('/api/tally-webhook/1week',handleWebhook('1 Week'));
 app.post('/api/tally-webhook/4week',handleWebhook('4 Week'));
