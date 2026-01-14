@@ -385,9 +385,8 @@ raw.fields.forEach(f => {
     : planType === 'free meal trial'
       ? 'question_Gl79Zk_9c53b595-0463-4d46-aca4-8f14480494ba'
       : planType === '1 Week'
-        ? 'question_xDJv8d_25b0dded-df81-4e6b-870b-9248f9a4ef70'
+        ? 'question_xDJv8d_25b0dded-df81-4e6b-870b-9244029e451c'
         : null;
-        
   const token=raw.fields.find(f=>f.key===tokenKey)?.value;
   const meta =validTokens.get(token);
   if(!meta||meta.used||meta.plan!==planType){return res.status(401).send('bad token');}
@@ -596,7 +595,12 @@ doc.end();
 }catch(e){console.error('❌ Tally handler',e); res.status(500).send('err');}
 };
 
-app.post('/api/tally-webhook/1week',handleWebhook('1 Week'));
+app.post('/api/tally-webhook/1week', async (req, res) => {
+  console.log("🔥 FULL TALLY PAYLOAD:");
+  console.log(JSON.stringify(req.body, null, 2));
+
+  res.status(200).send("received");
+});
 app.post('/api/tally-webhook/4week',handleWebhook('4 Week'));
 app.post('/api/tally-webhook/freetrial', handleWebhook('free meal trial'));
 
