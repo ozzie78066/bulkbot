@@ -323,9 +323,9 @@ app.post('/webhook/shopify', async (req, res) => {
     tallyURL = `https://tally.so/r/wzRD1g?token=${token}&plan=4week`;
   else if (plan === 'free meal trial')
     tallyURL = `https://tally.so/r/GxvQgL?token=${token}&plan=trial`;
-  else
+  else if (plan === '1 Week')
     tallyURL = `https://tally.so/r/wMq9vX?token=${token}&plan=1week`;
-    
+
    console.log(`📦 Shopify order received for: ${plan}`);
     console.log(`📧 Email: ${email}`);
     console.log(`🔑 Token: ${token}`);
@@ -384,7 +384,10 @@ raw.fields.forEach(f => {
     ? 'question_OX4qD8_279a746e-6a87-47a2-af5f-9015896eda25'
     : planType === 'free meal trial'
       ? 'question_Gl79Zk_9c53b595-0463-4d46-aca4-8f14480494ba'
-      : 'question_xDJv8d_25b0dded-df81-4e6b-870b-9244029e451c';
+      : planType === '1 Week'
+        ? 'question_xDJv8d_25b0dded-df81-4e6b-870b-9244029e451c'
+        : null;
+        
   const token=raw.fields.find(f=>f.key===tokenKey)?.value;
   const meta =validTokens.get(token);
   if(!meta||meta.used||meta.plan!==planType){return res.status(401).send('bad token');}
