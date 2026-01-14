@@ -63,8 +63,6 @@ async function fetchYouTubeLink(query, label) {
 const app   = express();
 const openai= new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 app.use(bodyP.json());
-app.use(bodyP.urlencoded({ extended: true }));
-
 
 
 
@@ -137,7 +135,6 @@ ${userInfo}
 
 RULES
 -----
-• QUIETLY AVOID ALLERGIES
 • Words only, no filler symbols (*,@,# etc.)
 • Just return the plan and shopping list.
 • Use realistic, easy-to-follow meals.
@@ -180,7 +177,6 @@ Generate ${span} including:
 
 RULES
 -----
-• QUIETLY AVOID ALLERGIES
 • words only no filler symbols (*,@,#. ect.)
 • Just return plan.
 • Each day unique – no “repeat previous day”
@@ -383,9 +379,19 @@ raw.fields.forEach(f => {
   if(processed.has(raw.submissionId)) return res.send('duplicate');
   processed.add(raw.submissionId); setTimeout(()=>processed.delete(raw.submissionId),9e5);
 
-  const token = raw.fields.find(f =>
-  f.label?.toLowerCase().includes('token')
-)?.value;
+  const tokenKey =
+  planType === '4 Week'
+    ? 'question_OX4qD8_279a746e-6a87-47a2-af5f-9015896eda25'
+    : planType === 'free meal trial'
+      ? 'question_Gl79Zk_9c53b595-0463-4d46-aca4-8f14480494ba'
+      : 'question_xDJv8d_25b0dded-df81-4e6b-870b-9244029e451c';
+  const token=raw.fields.find(f=>f.key===tokenKey)?.value;
+  const meta =validTokens.get(token);
+  if(!meta||meta.used||meta.plan!==planType){return res.status(401).send('bad token');}
+  raw.fields.forEach(f=>{
+    const map=dropdown[f.key];
+    if(map && map[f.value]) f.value=map[f.value];
+  });
 
   const user={
     name : raw.fields.find(f=>f.label.toLowerCase().includes('name'))?.value||'Client',
