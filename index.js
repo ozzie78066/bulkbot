@@ -601,12 +601,7 @@ doc.end();
 }catch(e){console.error('❌ Tally handler',e); res.status(500).send('err');}
 };
 
-app.post('/api/tally-webhook/1week', async (req, res) => {
-  console.log("🔥 FULL TALLY PAYLOAD:");
-  console.log(JSON.stringify(req.body, null, 2));
-
-  res.status(200).send("received");
-});
+app.post('/api/tally-webhook/1week', handleWebhook('1 Week'));
 app.post('/api/tally-webhook/4week',handleWebhook('4 Week'));
 app.post('/api/tally-webhook/freetrial', handleWebhook('free meal trial'));
 
