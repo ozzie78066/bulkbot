@@ -65,11 +65,11 @@ const app   = express();
 const openai= new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 app.use(bodyP.json());
 
-app.post('*', (req, res) => {
+app.post('/**', (req, res, next) => {
   console.log("🔥 SOME POST HIT THE SERVER");
   console.log("PATH:", req.path);
   console.log("BODY:", JSON.stringify(req.body, null, 2));
-  res.send("ok");
+  next();   // ← IMPORTANT so your real routes still run
 });
 
 /* ---------------------------------------------------------------------- */
