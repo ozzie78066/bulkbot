@@ -10,12 +10,7 @@ const { OpenAI }= require('openai');
 const fs        = require('fs');
 const path      = require('path');
 const yts = require('yt-search');
-app.post('*', (req, res) => {
-  console.log("🔥 SOME POST HIT THE SERVER");
-  console.log("PATH:", req.path);
-  console.log("BODY:", JSON.stringify(req.body, null, 2));
-  res.send("ok");
-});
+
 
 
 const mail = nodemailer.createTransport({
@@ -70,7 +65,12 @@ const app   = express();
 const openai= new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 app.use(bodyP.json());
 
-
+app.post('*', (req, res) => {
+  console.log("🔥 SOME POST HIT THE SERVER");
+  console.log("PATH:", req.path);
+  console.log("BODY:", JSON.stringify(req.body, null, 2));
+  res.send("ok");
+});
 
 /* ---------------------------------------------------------------------- */
 /* ── token persistence ───────────────────────────────────────────────── */
